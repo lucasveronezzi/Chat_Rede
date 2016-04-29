@@ -9,7 +9,7 @@ public class Main extends JFrame{
 	public static Main frame;
 	public static void main (String[] args){
 		try{
-			UIManager.setLookAndFeel("com.jtattoo.plaf.acryl.AcrylLookAndFeel");
+			UIManager.setLookAndFeel("com.jtattoo.plaf.texture.TextureLookAndFeel");
 			UIManager.put("RootPane.setupButtonVisible", false);
 			frame = new Main();
 			frame.setVisible(true);
@@ -32,7 +32,7 @@ public class Main extends JFrame{
 		JLabel labelPorta = new JLabel("Porta: ");
 		JLabel labelUser = new JLabel("Usuário: ");
 		
-		JTextField textIP = new JTextField("192.168.1.31");
+		JTextField textIP = new JTextField("192.168.0.11");
 		textIP.setColumns(10);
 		JTextField textPorta = new JTextField("555");
 		textPorta.setColumns(10);
