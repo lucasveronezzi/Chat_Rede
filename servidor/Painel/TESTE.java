@@ -83,7 +83,7 @@ public class TESTE extends JFrame {
 		panel_1.add(scrollPane);
 		
 		JLabel lblNewLabel = new JLabel("New label");
-		lblNewLabel.setIcon(new ImageIcon("C:\\Users\\Lucas\\Documents\\eclipse\\ChatMulti_Client\\icon\\chatOn.jpg"));
+		lblNewLabel.setIcon(new ImageIcon(TESTE.class.getResource("/resources/images/list/green.gif")));
 		scrollPane.setViewportView(lblNewLabel);
 		
 		JScrollPane scrollPane_1 = new JScrollPane();

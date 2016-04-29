@@ -3,6 +3,8 @@ package Chat;
 import javax.swing.ImageIcon;
 import javax.swing.JTextArea;
 
+import Painel.TESTE;
+
 public class InfoChat {
 	private String nome;
 	private String ip;
@@ -28,7 +30,7 @@ public class InfoChat {
 		return this.areaTextRecebe;
 	}
 	public void setIconON(){
-		icon = new ImageIcon("C:\\Users\\Lucas\\Documents\\eclipse\\ChatMulti_Client\\icon\\chatOn.jpg");
+		icon = new ImageIcon(InfoChat.class.getResource("/resources/images/list/green.gif"));
 	}
 	public void setIconOff(){
 		icon = new ImageIcon("C:\\Users\\Lucas\\Documents\\eclipse\\ChatMulti_Client\\icon\\chatOff.jpg");

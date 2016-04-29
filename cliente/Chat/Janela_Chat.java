@@ -23,26 +23,6 @@ public class Janela_Chat extends JFrame {
 	private DefaultListModel<InfoChat> chat = new DefaultListModel<InfoChat>();
 	private JList<InfoChat> listChat;
 
-	public static void main (String[] args){
-		try{
-			UIManager.setLookAndFeel("com.jtattoo.plaf.luna.LunaLookAndFeel");
-			UIManager.put("RootPane.setupButtonVisible", false);			
-		}catch(ClassNotFoundException | InstantiationException | IllegalAccessException
-				| UnsupportedLookAndFeelException e) {
-			JOptionPane.showMessageDialog(null, e, "Erro", JOptionPane.ERROR_MESSAGE);
-		}
-	}
-	
-	public void incluirMsg(String chatNome, String msg){
-		//for(ListaChat temp : chat){
-		for(int x=0;chat.size() > x;x++){
-			if(chat.get(x).getNome().equals(chatNome)){
-				chat.get(x).getText().append(msg);
-				break;
-			}
-		}
-	}
-	
 	public Janela_Chat(Cliente client) {
 		setTitle("Conectado | Usuario: " + client.nome);
 		getContentPane().setLayout(new BoxLayout(getContentPane(), BoxLayout.X_AXIS));
@@ -150,4 +130,14 @@ public class Janela_Chat extends JFrame {
 			}
 		}
 	}
+	public void incluirMsg(String chatNome, String msg){
+		//for(ListaChat temp : chat){
+		for(int x=0;chat.size() > x;x++){
+			if(chat.get(x).getNome().equals(chatNome)){
+				chat.get(x).getText().append(msg);
+				break;
+			}
+		}
+	}
+	
 }

@@ -9,7 +9,7 @@ public class Main extends JFrame{
 	public static Main frame;
 	public static void main (String[] args){
 		try{
-			UIManager.setLookAndFeel("com.jtattoo.plaf.luna.LunaLookAndFeel");
+			UIManager.setLookAndFeel("com.jtattoo.plaf.acryl.AcrylLookAndFeel");
 			UIManager.put("RootPane.setupButtonVisible", false);
 			frame = new Main();
 			frame.setVisible(true);
