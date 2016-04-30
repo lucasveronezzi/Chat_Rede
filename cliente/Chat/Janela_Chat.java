@@ -74,7 +74,7 @@ public class Janela_Chat extends JFrame {
 			@Override
 		    public void mouseClicked(MouseEvent e) {
 				if(btnEnviar.isEnabled()){
-					String msg = areaTextSend.getText();
+					String msg = areaTextSend.getText().trim();
 					if(msg != ""){
 						if(listChat.getSelectedValue().getNome().equals("Chat All")){
 							client.Enviar("GROUP_MSG", "Chat All", msg);
@@ -90,7 +90,7 @@ public class Janela_Chat extends JFrame {
 		areaTextSend.getDocument().addDocumentListener(new DocumentListener(){
 			@Override
 			public void changedUpdate(DocumentEvent arg0) {
-				if(areaTextSend.getText().equals("")){
+				if(areaTextSend.getText().trim().equals("")){
 		    		btnEnviar.setEnabled(false);
 			     }else{
 			    	 btnEnviar.setEnabled(true);
@@ -98,7 +98,7 @@ public class Janela_Chat extends JFrame {
 			}
 			@Override
 			public void insertUpdate(DocumentEvent arg0) {
-				if(areaTextSend.getText().equals("")){
+				if(areaTextSend.getText().trim().equals("")){
 		    		btnEnviar.setEnabled(false);
 			     }else{
 			    	 btnEnviar.setEnabled(true);
@@ -106,7 +106,7 @@ public class Janela_Chat extends JFrame {
 			}
 			@Override
 			public void removeUpdate(DocumentEvent arg0) {
-				if(areaTextSend.getText().equals("")){
+				if(areaTextSend.getText().trim().equals("")){
 		    		btnEnviar.setEnabled(false);
 			     }else{
 			    	 btnEnviar.setEnabled(true);
