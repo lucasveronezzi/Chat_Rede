@@ -65,34 +65,32 @@ public class Janela_Chat extends JFrame {
 		
 		btnEnviar = new JButton("Enviar");
 		btnEnviar.addMouseListener(new MouseAdapter() {
-		
 			@Override
 		    public void mouseClicked(MouseEvent e) {
-				String msg = areaTextSend.getText();
-				if(msg != ""){
-					if(listChat.getSelectedValue().getNome().equals("Chat All")){
-						client.Enviar("GROUP_MSG", "Chat All", msg);
-					}else{
-						client.Enviar("SINGLE_MSG",listChat.getSelectedValue().getNome(),msg);
+				if(btnEnviar.isEnabled()){
+					String msg = areaTextSend.getText();
+					if(msg != ""){
+						if(listChat.getSelectedValue().getNome().equals("Chat All")){
+							client.Enviar("GROUP_MSG", "Chat All", msg);
+						}else{
+							client.Enviar("SINGLE_MSG",listChat.getSelectedValue().getNome(),msg);
+						}
+						areaTextSend.setText("");
+						areaTextRecebe.append("Eu: " + msg + "\n");
 					}
-					areaTextSend.setText("");
-					areaTextRecebe.append("Eu: " + msg + "\n");
 				}
 			}
-			
-		    public void mouseEntered(MouseEvent e) {
+			@Override
+			public void mouseEntered(MouseEvent e) {
 		    	String msg = areaTextSend.getText();
 		    	if(msg.equals("")){
 		    		btnEnviar.setEnabled(false);
-		    		btnEnviar.setVisible(false);
 			     }
 		     }
-			
+			@Override
 		    public void mouseExited(MouseEvent e) {
 		        btnEnviar.setEnabled(true);
-		        btnEnviar.setVisible(true);
 		     }
-		    
 		});
 
 		scrollPainel.setRowHeaderView(btnEnviar);
