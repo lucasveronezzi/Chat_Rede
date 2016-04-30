@@ -24,11 +24,18 @@ public class Cliente implements Runnable{
 			 this.porta = Integer.parseInt(porta);
 			 this.nome = nome;
 			 socket = new Socket(this.ipServidor, this.porta);
-		     conectado = true;
-		     JOptionPane.showMessageDialog(null,"Conexão realizada com sucesso!");
-		     saida = new DataOutputStream(socket.getOutputStream());
+			 saida = new DataOutputStream(socket.getOutputStream());
 		     entrada = new DataInputStream(socket.getInputStream());
-		     Enviar("INICIAR","servidor", nome);
+		     Enviar("a","a", nome);
+		     String status = entrada.readUTF();
+		     if(status.equals("ACEITO")){
+			     conectado = true;
+			     JOptionPane.showMessageDialog(null,"Conexão realizada com sucesso!");
+		     }else{
+		    	 conectado = false;
+		    	 JOptionPane.showMessageDialog(null,"Nome já existe, por favor usar outro nome." + status);
+		     }
+		    
 		 }catch(ConnectException e){
 			 conectado = false;
 			  JOptionPane.showMessageDialog(null, "Não foi possivel conectar no servidor \nVerifique se o IP e a porta estão corretas.", "Erro", JOptionPane.ERROR_MESSAGE);

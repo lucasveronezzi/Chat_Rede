@@ -32,7 +32,7 @@ public class Main extends JFrame{
 		JLabel labelPorta = new JLabel("Porta: ");
 		JLabel labelUser = new JLabel("Usuário: ");
 		
-		JTextField textIP = new JTextField("192.168.0.11");
+		JTextField textIP = new JTextField("192.168.1.31");
 		textIP.setColumns(10);
 		JTextField textPorta = new JTextField("555");
 		textPorta.setColumns(10);

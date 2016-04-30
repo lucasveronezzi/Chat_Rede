@@ -30,13 +30,41 @@ public class Servidor implements Runnable{
 		 while(true){
 			 try{
 				 Socket socket = servidor.accept();
-				 client.add(new Cliente(socket));
-				 client.get(client.size()-1).start();;
+				 String nomeTemp = validarNome(socket);
+				 if(nomeTemp != null){
+					 client.add(new Cliente(socket,nomeTemp));
+					 client.get(client.size()-1).start();
+				 }else
+					 socket.close();
 			 }catch(IOException e) {
 				e.printStackTrace();
 			 }
 		}
 	}
+	 public String validarNome(Socket socketValidar){
+		 try {
+			DataInputStream entrada = new DataInputStream(socketValidar.getInputStream());
+			DataOutputStream saida = new DataOutputStream(socketValidar.getOutputStream());
+			String dados =  entrada.readUTF();
+			StringTokenizer splitMsg = new StringTokenizer(dados);
+			splitMsg.nextToken("|");
+			splitMsg.nextToken("|");
+		 	String nome = splitMsg.nextToken("|");
+		 	if(!grupo.get(0).clientes.contains(nome)){
+		 		grupo.get(0).addCliente(nome);
+		 		saida.writeUTF("ACEITO");
+		 		return nome;
+		 	}else{
+		 		saida.writeUTF("RECUSADO");
+		 		terminal.addMsgTerminal("[Servidor]:Cliente("+socketValidar.getInetAddress().getHostAddress()+") recusado, nome "+nome+" já existe\n");
+		 		return null;
+		 	}
+			
+		} catch (IOException e) {
+			e.printStackTrace();
+			return null;
+		}
+	 }
 	 
 	 public void redirecionarMSG(String nome, String msg){
 		 for(int x=0;client.size() > x;x++){
@@ -61,13 +89,6 @@ public class Servidor implements Runnable{
 		 }catch(IOException e) {
 			e.printStackTrace();
 		}
-	 }
-	
-	 public void Teste(){
-		 Thread.currentThread().getThreadGroup().list();
-		 for(int x=0;client.size() > x;x++){
-			 System.out.println(client.get(x).nome);
-		 }
 	 }
 	 
 	 public void RemoverClient(String nome){
@@ -94,8 +115,6 @@ public class Servidor implements Runnable{
 			}
 		 }
 	 }
-	 
-	 
 	 
 	 public void enviarClientesON(Cliente destino){
 		 String msg1 = "CLIENTES_ON";
@@ -125,12 +144,16 @@ public class Servidor implements Runnable{
 		private DataInputStream entrada;
 		private DataOutputStream saida;
 		 
-		 public Cliente(Socket socket){
+		 public Cliente(Socket socket, String nome){
 			 try {
 			 		this.socket = socket;
+			 		this.nome = nome;
 			 		ip = socket.getInetAddress().getHostAddress();
 			 		saida = new DataOutputStream(socket.getOutputStream());
 					entrada = new DataInputStream(socket.getInputStream());
+					enviarClientesON(this);
+					terminal.addMsgTerminal("[Servidor]: Nova conexão com o cliente \"" +  nome +"\"("+ip+")\n");
+					terminal.addCliente(nome, ip, socket.getPort());
 			 }catch(IOException e) {
 					e.printStackTrace();
 			 }
@@ -145,14 +168,6 @@ public class Servidor implements Runnable{
 					 String destino;
 					 StringTokenizer splitMsg = new StringTokenizer(dados);
 					 switch(splitMsg.nextToken("|")){
-					 	case "INICIAR": /// Arquitetura [Opção] | [cliente]
-					 		splitMsg.nextToken("|");
-					 		nome = splitMsg.nextToken("|");
-					 		grupo.get(0).addCliente(nome);
-					 		enviarClientesON(this);
-					 		terminal.addMsgTerminal("[Servidor]: Nova conexão com o cliente \"" +  nome +"\"("+ip+")\n");
-					 		terminal.addCliente(nome, ip, socket.getPort());
-					 		break;
 					 	case "SINGLE_MSG": /// Arquitetura [Opção] | [Destino] | [Mensagem]
 					 		destino = splitMsg.nextToken("|");
 					 		while(splitMsg.hasMoreTokens()){
@@ -172,6 +187,7 @@ public class Servidor implements Runnable{
 					 		}
 					 		for(Grupo grupoT : grupo){
 					 			if(grupoT.nome.equals(grupoR)){
+					 				terminal.addMsgTerminal("[Mensagem Grupo]: De: \"" +nome+ "\" Para: \""+grupoR+"\"\nMsg: " + msg + "\n");
 					 				for(int x=0;grupoT.clientes.size() > x;x++){
 					 					destino = grupoT.getCliente(x);
 					 					if(destino != this.nome){
