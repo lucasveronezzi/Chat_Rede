@@ -2,12 +2,17 @@ package Chat;
 
 import javax.swing.*;
 import javax.swing.border.LineBorder;
+import javax.swing.event.AncestorEvent;
+import javax.swing.event.AncestorListener;
+import javax.swing.event.DocumentEvent;
+import javax.swing.event.DocumentListener;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.Dimension;
+import java.awt.event.ActionListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 
@@ -64,6 +69,7 @@ public class Janela_Chat extends JFrame {
 		panelRight.add(scrollPainel);
 		
 		btnEnviar = new JButton("Enviar");
+		btnEnviar.setEnabled(false);
 		btnEnviar.addMouseListener(new MouseAdapter() {
 			@Override
 		    public void mouseClicked(MouseEvent e) {
@@ -80,19 +86,34 @@ public class Janela_Chat extends JFrame {
 					}
 				}
 			}
-			@Override
-			public void mouseEntered(MouseEvent e) {
-		    	String msg = areaTextSend.getText();
-		    	if(msg.equals("")){
-		    		btnEnviar.setEnabled(false);
-			     }
-		     }
-			@Override
-		    public void mouseExited(MouseEvent e) {
-		        btnEnviar.setEnabled(true);
-		     }
 		});
-
+		areaTextSend.getDocument().addDocumentListener(new DocumentListener(){
+			@Override
+			public void changedUpdate(DocumentEvent arg0) {
+				if(areaTextSend.getText().equals("")){
+		    		btnEnviar.setEnabled(false);
+			     }else{
+			    	 btnEnviar.setEnabled(true);
+			     }
+			}
+			@Override
+			public void insertUpdate(DocumentEvent arg0) {
+				if(areaTextSend.getText().equals("")){
+		    		btnEnviar.setEnabled(false);
+			     }else{
+			    	 btnEnviar.setEnabled(true);
+			     }
+			}
+			@Override
+			public void removeUpdate(DocumentEvent arg0) {
+				if(areaTextSend.getText().equals("")){
+		    		btnEnviar.setEnabled(false);
+			     }else{
+			    	 btnEnviar.setEnabled(true);
+			     }
+			}
+			
+		});
 		scrollPainel.setRowHeaderView(btnEnviar);
 	
 		client.SetChat(this);
