@@ -13,12 +13,14 @@ public class Servidor implements Runnable{
 	private ServerSocket servidor;
 	private Janela_Servidor terminal;
 	private List<Cliente> client = new ArrayList<Cliente>();
+	private List<Grupo> grupo = new ArrayList<Grupo>();
 	
 	public Servidor(int porta,Janela_Servidor terminal){
 		 try {
 			 	this.terminal = terminal;
 				servidor = new ServerSocket(porta);
-				terminal.addMsgTerminal("[Servidor]: Porta aberta com sucesso " + porta + "\n");				
+				terminal.addMsgTerminal("[Servidor]: Porta aberta com sucesso " + porta + "\n");
+				grupo.add(new Grupo("Chat All"));
 			} catch (IOException e) {
 				JOptionPane.showMessageDialog(null, e, "Erro", JOptionPane.ERROR_MESSAGE);
 			} 
@@ -47,8 +49,6 @@ public class Servidor implements Runnable{
 					terminal.addMsgTerminal("[Servidor] Não foi possivel enviar a mensagem!Erro:\n"+e.getMessage());
 				}
 				 break;
-			 }else{
-				 terminal.addMsgTerminal("[Servidor] O cliente de destino não está conectado!\n");
 			 }
 		 }
 	 }
@@ -74,8 +74,9 @@ public class Servidor implements Runnable{
 		 for(int x=0;client.size() > x;x++){
 			 if(client.get(x).nome.equals(nome)){
 				 Cliente temp = client.get(x);
-				 try {
-					client.remove(x);
+				 try{
+					grupo.get(0).removeCliente(nome);;
+					client.remove(x);    
 					temp.entrada.close();
 					temp.saida.close();
 					temp.socket.close();
@@ -139,18 +140,20 @@ public class Servidor implements Runnable{
 			 try {
 				 while (loop){
 					 String dados =  entrada.readUTF();
+					 String msg = "";
+					 String destino;
 					 StringTokenizer splitMsg = new StringTokenizer(dados);
 					 switch(splitMsg.nextToken("|")){
 					 	case "INICIAR": /// Arquitetura [Opção] | [cliente]
 					 		splitMsg.nextToken("|");
 					 		nome = splitMsg.nextToken("|");
+					 		grupo.get(0).addCliente(nome);
 					 		enviarClientesON(this);
 					 		terminal.addMsgTerminal("[Servidor]: Nova conexão com o cliente \"" +  nome +"\"("+ip+")\n");
 					 		terminal.addCliente(nome, ip, socket.getPort());
 					 		break;
 					 	case "SINGLE_MSG": /// Arquitetura [Opção] | [Destino] | [Mensagem]
-					 		String msg = "";
-					 		String destino = splitMsg.nextToken("|");
+					 		destino = splitMsg.nextToken("|");
 					 		while(splitMsg.hasMoreTokens()){
 					 			msg = msg + splitMsg.nextToken("|");
 					 			if(splitMsg.hasMoreTokens())
@@ -158,10 +161,26 @@ public class Servidor implements Runnable{
 					 		}
 					 		terminal.addMsgTerminal("[Mensagem]: De: \"" +nome+ "\" Para: \""+destino+"\"\nMsg: " + msg + "\n");
 					 		/// Arquitetura [Opção] | [Emitente] | [Mensagem]
-					 		msg = "SINGLE_MSG|"+nome+"|"+msg;
+					 		msg = "SINGLE_MSG|"+this.nome+"|"+msg;
 					 		redirecionarMSG(destino, msg);
 					 		break;
-					 	case "GROUP_MSG":
+					 	case "GROUP_MSG": //  Arquitetura [Opção] | [nome do Grupo] | [Mensagem]
+					 		String grupoR = splitMsg.nextToken("|");
+					 		while(splitMsg.hasMoreTokens()){
+					 			msg = msg + splitMsg.nextToken("|");
+					 			if(splitMsg.hasMoreTokens())
+					 				msg = msg+"|";
+					 		}
+					 		for(Grupo grupoT : grupo){
+					 			if(grupoT.nome.equals(grupoR)){
+					 				for(int x=0;grupoT.clientes.size() > x;x++){
+					 					destino = grupoT.getCliente(x);
+					 					// Arquitetura [Opção] | [nome do Grupo] | [Emitente] | [Mensagem]
+					 					msg = "GROUP_MSG|"+grupoT.nome+"|"+this.nome+"|"+msg;
+					 					redirecionarMSG(destino,msg);
+					 				}
+					 			}
+					 		}
 					 		break;
 					 	case "FECHAR":
 					 		terminal.addMsgTerminal("[Servidor]: O Cliente \""+nome+"\"("+ip+") desconectou!\n");
@@ -178,4 +197,23 @@ public class Servidor implements Runnable{
 			}
 		 }
 	 }
+	 
+	 class Grupo{
+		 private String nome;
+		 private List<String> clientes = new ArrayList<String>(); 
+		 
+		 public Grupo(String n){
+			 nome = n;
+		 }
+		 public void addCliente(String nomeCliente){
+			 clientes.add(nomeCliente);
+		 }
+		 public String getCliente(int index){
+			 return clientes.get(index);
+		 }
+		 public void removeCliente(String nomeCliente){
+			 clientes.remove(nomeCliente);
+		 }
+	 }
+
 }
