@@ -65,8 +65,9 @@ public class Janela_Chat extends JFrame {
 		
 		btnEnviar = new JButton("Enviar");
 		btnEnviar.addMouseListener(new MouseAdapter() {
+		
 			@Override
-		public void mouseClicked(MouseEvent e) {
+		    public void mouseClicked(MouseEvent e) {
 				String msg = areaTextSend.getText();
 				if(msg != ""){
 					if(listChat.getSelectedValue().getNome().equals("Chat All")){
@@ -78,7 +79,22 @@ public class Janela_Chat extends JFrame {
 					areaTextRecebe.append("Eu: " + msg + "\n");
 				}
 			}
+			
+		    public void mouseEntered(MouseEvent e) {
+		    	String msg = areaTextSend.getText();
+		    	if(msg.equals("")){
+		    		btnEnviar.setEnabled(false);
+		    		btnEnviar.setVisible(false);
+			     }
+		     }
+			
+		    public void mouseExited(MouseEvent e) {
+		        btnEnviar.setEnabled(true);
+		        btnEnviar.setVisible(true);
+		     }
+		    
 		});
+
 		scrollPainel.setRowHeaderView(btnEnviar);
 	
 		client.SetChat(this);
