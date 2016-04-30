@@ -42,15 +42,25 @@ public class Cliente implements Runnable{
 			 while(loop){
 				 try{
 					String dados =  entrada.readUTF();
+					String msg = "";
+					String emitente;
+					String nomeGrupo;
 					StringTokenizer splitMsg = new StringTokenizer(dados);
 						switch(splitMsg.nextToken("|")){
 						case "SINGLE_MSG":
-							String msg = "";
-							String emitente = splitMsg.nextToken("|");
+							emitente = splitMsg.nextToken("|");
 							while(splitMsg.hasMoreTokens()){
 								msg = msg + splitMsg.nextToken("|");
 							}
 							chatFrame.incluirMsg(emitente, emitente +": "+msg+"\n");
+							break;
+						case "GRUPO_MSG":// Arquitetura [Opção] | [nome do Grupo] | [Emitente] | [Mensagem]
+							nomeGrupo = splitMsg.nextToken("|");
+							emitente = splitMsg.nextToken("|");
+							while(splitMsg.hasMoreTokens()){
+								msg = msg + splitMsg.nextToken("|");
+							}
+							chatFrame.incluirMsg(nomeGrupo, emitente +": "+msg+"\n");
 							break;
 						case "CLIENTES_ON":
 							while(splitMsg.hasMoreTokens()){

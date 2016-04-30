@@ -141,6 +141,7 @@ public class Servidor implements Runnable{
 				 while (loop){
 					 String dados =  entrada.readUTF();
 					 String msg = "";
+					 String msgEnviar = "";
 					 String destino;
 					 StringTokenizer splitMsg = new StringTokenizer(dados);
 					 switch(splitMsg.nextToken("|")){
@@ -168,16 +169,16 @@ public class Servidor implements Runnable{
 					 		String grupoR = splitMsg.nextToken("|");
 					 		while(splitMsg.hasMoreTokens()){
 					 			msg = msg + splitMsg.nextToken("|");
-					 			if(splitMsg.hasMoreTokens())
-					 				msg = msg+"|";
 					 		}
 					 		for(Grupo grupoT : grupo){
 					 			if(grupoT.nome.equals(grupoR)){
 					 				for(int x=0;grupoT.clientes.size() > x;x++){
 					 					destino = grupoT.getCliente(x);
+					 					if(destino != this.nome){
 					 					// Arquitetura [Opção] | [nome do Grupo] | [Emitente] | [Mensagem]
-					 					msg = "GROUP_MSG|"+grupoT.nome+"|"+this.nome+"|"+msg;
-					 					redirecionarMSG(destino,msg);
+						 					msgEnviar = "GRUPO_MSG|"+grupoT.nome+"|"+this.nome+"|"+msg;
+						 					redirecionarMSG(destino,msgEnviar);
+					 					}
 					 				}
 					 			}
 					 		}
