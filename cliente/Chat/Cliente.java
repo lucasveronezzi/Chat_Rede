@@ -6,6 +6,8 @@ import java.net.ConnectException;
 import java.net.Socket;
 import java.net.SocketException;
 import java.util.StringTokenizer;
+
+import javax.swing.DefaultListModel;
 import javax.swing.JOptionPane;
 
 public class Cliente implements Runnable{
@@ -26,7 +28,7 @@ public class Cliente implements Runnable{
 			 socket = new Socket(this.ipServidor, this.porta);
 			 saida = new DataOutputStream(socket.getOutputStream());
 		     entrada = new DataInputStream(socket.getInputStream());
-		     Enviar("a","a", nome);
+		     enviar("a","a", nome);
 		     String status = entrada.readUTF();
 		     if(status.equals("ACEITO")){
 			     conectado = true;
@@ -79,6 +81,14 @@ public class Cliente implements Runnable{
 						case "CLIENTE_OFF":
 							chatFrame.removeLabelClientON(splitMsg.nextToken());
 							break;
+						case "GRUPOS_ON":
+							while(splitMsg.hasMoreTokens()){
+								chatFrame.addLabelGrupo(splitMsg.nextToken());
+							}
+							break;
+						case "GRUPO_ADD":
+							chatFrame.addLabelGrupo(splitMsg.nextToken("|"));
+							break;
 						default:
 							System.out.println("[Servidor]: Não foi possivel identificar o comando\n");
 							break;
@@ -94,7 +104,7 @@ public class Cliente implements Runnable{
 			}
 		}
 	   
-	   public void Enviar(String opt,String destino, String msg){
+	   public void enviar(String opt,String destino, String msg){
 		  try{
 			  /// Arquitetura [Opção] | [Destino] | [Mensagem]
 			saida.writeUTF(opt+ "|" +destino+ "|" +msg);
@@ -105,11 +115,25 @@ public class Cliente implements Runnable{
 		  }
 	   }	   
 	   
-	   public void SetChat(Janela_Chat frame){
+	   public void criarGrupo(String grupo, DefaultListModel<String> usuarios){
+		   try{
+			   String env = "CRIAR_GRUPO|"+grupo+"|"+nome;
+			   for(int x=0;usuarios.size() > x;x++){
+				   env = env + "|" + usuarios.get(x);
+			   }
+			   saida.writeUTF(env);
+		   }catch(SocketException e){
+				  JOptionPane.showMessageDialog(null, "Não foi possivel enviar a mensagem ao servidor", "Erro", JOptionPane.ERROR_MESSAGE);
+		   }catch(IOException e) {
+				  JOptionPane.showMessageDialog(null, e, "Erro", JOptionPane.ERROR_MESSAGE);
+		   }
+	   }
+	   
+	   public void setChat(Janela_Chat frame){
 		   this.chatFrame = frame;
 	   }
 	   
-	   public void Fechar(){
+	   public void fechar(){
 		   try{
 			   saida.writeUTF("FECHAR");
 			   socket.close();

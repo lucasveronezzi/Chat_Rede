@@ -136,6 +136,33 @@ public class Servidor implements Runnable{
 		}
 	 }
 	 
+	 public void enviarGrupos(Cliente destino){
+		 String msg = "GRUPOS_ON";
+		 for(int x=0;grupo.size()>x;x++){
+			 if(grupo.get(x).clientes.contains(destino.nome)){
+				 msg = msg+"|"+grupo.get(x).nome;
+			 }
+		 }
+		 try {
+			destino.saida.writeUTF(msg);
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+	 }
+	 
+	 public void enviarGrupo(String grupo, List<String> clientes){
+		 String msg = "GRUPO_ADD|"+grupo;
+		 for(int x=0;client.size() > x;x++){
+			 if(clientes.contains(client.get(x).nome)){
+				 try {
+					client.get(x).saida.writeUTF(msg);
+				} catch (IOException e) {
+					e.printStackTrace();
+				}
+			 }
+		 }
+	 }
+	 
 	 public class Cliente extends Thread {
 		public String nome;
 		public Socket socket;
@@ -151,6 +178,7 @@ public class Servidor implements Runnable{
 			 		ip = socket.getInetAddress().getHostAddress();
 			 		saida = new DataOutputStream(socket.getOutputStream());
 					entrada = new DataInputStream(socket.getInputStream());
+					enviarGrupos(this);
 					enviarClientesON(this);
 					terminal.addMsgTerminal("[Servidor]: Nova conexão com o cliente \"" +  nome +"\"("+ip+")\n");
 					terminal.addCliente(nome, ip, socket.getPort());
@@ -166,6 +194,7 @@ public class Servidor implements Runnable{
 					 String msg = "";
 					 String msgEnviar = "";
 					 String destino;
+					 String grupoR;
 					 StringTokenizer splitMsg = new StringTokenizer(dados);
 					 switch(splitMsg.nextToken("|")){
 					 	case "SINGLE_MSG": /// Arquitetura [Opção] | [Destino] | [Mensagem]
@@ -181,7 +210,7 @@ public class Servidor implements Runnable{
 					 		redirecionarMSG(destino, msg);
 					 		break;
 					 	case "GROUP_MSG": //  Arquitetura [Opção] | [nome do Grupo] | [Mensagem]
-					 		String grupoR = splitMsg.nextToken("|");
+					 		grupoR = splitMsg.nextToken("|");
 					 		while(splitMsg.hasMoreTokens()){
 					 			msg = msg + splitMsg.nextToken("|");
 					 		}
@@ -190,7 +219,7 @@ public class Servidor implements Runnable{
 					 				terminal.addMsgTerminal("[Mensagem Grupo]: De: \"" +nome+ "\" Para: \""+grupoR+"\"\nMsg: " + msg + "\n");
 					 				for(int x=0;grupoT.clientes.size() > x;x++){
 					 					destino = grupoT.getCliente(x);
-					 					if(destino != this.nome){
+					 					if(!destino.equals(this.nome)){
 					 					// Arquitetura [Opção] | [nome do Grupo] | [Emitente] | [Mensagem]
 						 					msgEnviar = "GRUPO_MSG|"+grupoT.nome+"|"+this.nome+"|"+msg;
 						 					redirecionarMSG(destino,msgEnviar);
@@ -198,6 +227,16 @@ public class Servidor implements Runnable{
 					 				}
 					 			}
 					 		}
+					 		break;
+					 	case "CRIAR_GRUPO": // Arquitetura [Opção] | [nome do grupo] | [nomes]
+					 		grupoR = splitMsg.nextToken("|");
+					 		int x = grupo.size();
+					 		grupo.add(x,new Grupo(grupoR));
+					 		while(splitMsg.hasMoreTokens()){
+					 			grupo.get(x).addCliente(splitMsg.nextToken("|"));
+					 		}
+					 		enviarGrupo(grupoR,grupo.get(x).clientes);
+					 		terminal.addMsgTerminal("[Servidor]: Grupo'"+grupoR+"' adicionar com sucesso\n");
 					 		break;
 					 	case "FECHAR":
 					 		terminal.addMsgTerminal("[Servidor]: O Cliente \""+nome+"\"("+ip+") desconectou!\n");
@@ -210,6 +249,7 @@ public class Servidor implements Runnable{
 					/// String msgRecebida = s.nextLine(); 
 				 }
 			}catch(IOException e) {
+				RemoverClient(nome);
 				e.printStackTrace();
 			}
 		 }

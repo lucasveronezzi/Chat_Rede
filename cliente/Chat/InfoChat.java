@@ -8,13 +8,15 @@ import Painel.TESTE;
 public class InfoChat {
 	private String nome;
 	private String ip;
+	public int tipo;
 	private JTextArea areaTextRecebe;
 	public ImageIcon icon;
+	public boolean msgNaoLida = false;
 	
-	public InfoChat(String nome, String ip){
+	public InfoChat(String nome, String ip, int tipo){
 		this.nome = nome;
 		this.ip = ip;	
-		
+		this.tipo = tipo;
 		areaTextRecebe = new JTextArea();
 		areaTextRecebe.setLineWrap(true);
 		areaTextRecebe.setWrapStyleWord(true);
@@ -30,9 +32,12 @@ public class InfoChat {
 		return this.areaTextRecebe;
 	}
 	public void setIconON(){
-		icon = new ImageIcon(InfoChat.class.getResource("/resources/images/list/green.gif"));
+		if(tipo == 0)
+			icon = new ImageIcon("C:\\Users\\Lucas\\Documents\\eclipse\\Chat_Rede\\img\\user-icon-on.png");
+		else
+			icon = new ImageIcon("C:\\Users\\Lucas\\Documents\\eclipse\\Chat_Rede\\img\\user-group-icon.png");
 	}
 	public void setIconOff(){
-		icon = new ImageIcon("C:\\Users\\Lucas\\Documents\\eclipse\\ChatMulti_Client\\icon\\chatOff.jpg");
+		icon = new ImageIcon("C:\\Users\\Lucas\\Documents\\eclipse\\Chat_Rede\\img\\user-icon-off.png");
 	}
 }

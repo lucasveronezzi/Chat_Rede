@@ -100,6 +100,12 @@ public class Janela_Servidor extends JFrame {
 				pausar.setEnabled(true);
 			}
 		});
+		pausar.addMouseListener(new MouseAdapter() {
+			@Override
+			public void mouseClicked(MouseEvent e) {
+				
+			}
+		});
 	}
 	
 	public void addMsgTerminal(String msg){
