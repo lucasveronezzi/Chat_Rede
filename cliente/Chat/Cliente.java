@@ -1,7 +1,12 @@
 package Chat;
+import java.io.BufferedInputStream;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
+import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.net.ConnectException;
 import java.net.Socket;
 import java.net.SocketException;
@@ -9,8 +14,10 @@ import java.util.StringTokenizer;
 
 import javax.swing.DefaultListModel;
 import javax.swing.JOptionPane;
+import javax.swing.JProgressBar;
 
 public class Cliente implements Runnable{
+	private ArquivoSocket sockFile;
 	private DataOutputStream saida;
 	private DataInputStream entrada;
 	private Socket socket;
@@ -28,7 +35,7 @@ public class Cliente implements Runnable{
 			 socket = new Socket(this.ipServidor, this.porta);
 			 saida = new DataOutputStream(socket.getOutputStream());
 		     entrada = new DataInputStream(socket.getInputStream());
-		     enviar("a","a", nome);
+		     saida.writeUTF("CON_CLIENTE|"+nome);
 		     String status = entrada.readUTF();
 		     if(status.equals("ACEITO")){
 			     conectado = true;
@@ -63,6 +70,10 @@ public class Cliente implements Runnable{
 							}
 							chatFrame.incluirMsg(emitente, emitente +": "+msg+"\n");
 							break;
+						case "CON_FILE_SEND":
+							emitente = splitMsg.nextToken("|");
+							startConexao_file("receber", emitente, splitMsg.nextToken("|"));
+							break;
 						case "GRUPO_MSG":// Arquitetura [Opção] | [nome do Grupo] | [Emitente] | [Mensagem]
 							nomeGrupo = splitMsg.nextToken("|");
 							emitente = splitMsg.nextToken("|");
@@ -83,11 +94,28 @@ public class Cliente implements Runnable{
 							break;
 						case "GRUPOS_ON":
 							while(splitMsg.hasMoreTokens()){
-								chatFrame.addLabelGrupo(splitMsg.nextToken());
+								nomeGrupo = splitMsg.nextToken("|");
+								msg = splitMsg.nextToken("|");
+								chatFrame.addLabelGrupo(nomeGrupo, msg);
 							}
 							break;
 						case "GRUPO_ADD":
-							chatFrame.addLabelGrupo(splitMsg.nextToken("|"));
+							nomeGrupo = splitMsg.nextToken("|");
+							msg = splitMsg.nextToken("|");
+							chatFrame.addLabelGrupo(nomeGrupo, msg);
+							if(!nomeGrupo.equals("Chat All"))
+							chatFrame.showNotfication("Grupo Adicionado", "Você foi adicionado ao grupo: "+nomeGrupo);
+							break;
+						case "USER_SAIU_GRUPO":
+							nomeGrupo = splitMsg.nextToken("|");
+							emitente = splitMsg.nextToken("|");
+							chatFrame.excUserDoGrupo(nomeGrupo,emitente);
+							chatFrame.incluirMsg(nomeGrupo,"O USUARIO '"+emitente+"' SAIU DO GRUPO\n");
+							break;
+						case "USER_ENTROU_GRUPO":
+							nomeGrupo = splitMsg.nextToken("|");
+							emitente = splitMsg.nextToken("|");
+							chatFrame.incluirMsg(nomeGrupo,"O USUARIO '"+emitente+"' ENTROU NO GRUPO\n");
 							break;
 						default:
 							System.out.println("[Servidor]: Não foi possivel identificar o comando\n");
@@ -105,15 +133,20 @@ public class Cliente implements Runnable{
 		}
 	   
 	   public void enviar(String opt,String destino, String msg){
-		  try{
-			  /// Arquitetura [Opção] | [Destino] | [Mensagem]
+		  try{ /// Arquitetura [Opção] | [Destino] | [Mensagem]
 			saida.writeUTF(opt+ "|" +destino+ "|" +msg);
 		  }catch(SocketException e){
 			  JOptionPane.showMessageDialog(null, "Não foi possivel enviar a mensagem ao servidor", "Erro", JOptionPane.ERROR_MESSAGE);
 		  }catch(IOException e) {
 			  JOptionPane.showMessageDialog(null, e, "Erro", JOptionPane.ERROR_MESSAGE);
 		  }
-	   }	   
+	   }	
+	   
+	   public void startConexao_file(String tipo, String usuario, String cmFile){
+		   File arquivo = new File(cmFile);
+		   sockFile = new ArquivoSocket(ipServidor, porta, tipo, usuario, arquivo, nome);
+		   sockFile.start();
+	   }
 	   
 	   public void criarGrupo(String grupo, DefaultListModel<String> usuarios){
 		   try{
@@ -131,6 +164,14 @@ public class Cliente implements Runnable{
 	   
 	   public void setChat(Janela_Chat frame){
 		   this.chatFrame = frame;
+	   }
+	   public void sairGrupo(String grupo){
+		   try {
+			saida.writeUTF("SAIR_GRUPO|"+grupo);
+			chatFrame.showNotfication("Mensagem", "Você saiu do grupo '"+grupo+"'");
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
 	   }
 	   
 	   public void fechar(){

@@ -9,7 +9,7 @@ public class Main extends JFrame{
 	public static Main frame;
 	public static void main (String[] args){
 		try{
-			UIManager.setLookAndFeel("com.jtattoo.plaf.texture.TextureLookAndFeel");
+			UIManager.setLookAndFeel("org.jb2011.lnf.beautyeye.BeautyEyeLookAndFeelCross");
 			UIManager.put("RootPane.setupButtonVisible", false);
 			frame = new Main();
 			frame.setVisible(true);
@@ -47,7 +47,7 @@ public class Main extends JFrame{
 				if(textIP.getText().length() > 0 && 
 						textPorta.getText().length() > 0 && 
 							textUser.getText().length() > 0){
-					if(!textUser.getText().contains("|")){
+					if(!textUser.getText().contains("|") && !textUser.getText().contains("ARQUIVO")){
 						Cliente client = new Cliente(textIP.getText(), textPorta.getText(), textUser.getText());
 						if(client.conectado){
 							frame.setVisible(false);
