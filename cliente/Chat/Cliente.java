@@ -1,20 +1,14 @@
 package Chat;
-import java.io.BufferedInputStream;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
 import java.net.ConnectException;
 import java.net.Socket;
 import java.net.SocketException;
 import java.util.StringTokenizer;
-
 import javax.swing.DefaultListModel;
 import javax.swing.JOptionPane;
-import javax.swing.JProgressBar;
 
 public class Cliente implements Runnable{
 	private ArquivoSocket sockFile;
@@ -68,11 +62,11 @@ public class Cliente implements Runnable{
 							while(splitMsg.hasMoreTokens()){
 								msg = msg + splitMsg.nextToken("|");
 							}
-							chatFrame.incluirMsg(emitente, emitente +": "+msg+"\n");
+							chatFrame.incluirMsg(emitente, emitente, msg);
 							break;
 						case "CON_FILE_SEND":
 							emitente = splitMsg.nextToken("|");
-							startConexao_file("receber", emitente, splitMsg.nextToken("|"));
+							chatFrame.incluirFile(emitente,splitMsg.nextToken("|"));
 							break;
 						case "GRUPO_MSG":// Arquitetura [Opção] | [nome do Grupo] | [Emitente] | [Mensagem]
 							nomeGrupo = splitMsg.nextToken("|");
@@ -80,7 +74,7 @@ public class Cliente implements Runnable{
 							while(splitMsg.hasMoreTokens()){
 								msg = msg + splitMsg.nextToken("|");
 							}
-							chatFrame.incluirMsg(nomeGrupo, emitente +": "+msg+"\n");
+							chatFrame.incluirMsg(nomeGrupo, emitente, msg);
 							break;
 						case "CLIENTES_ON":
 							while(splitMsg.hasMoreTokens()){
@@ -110,12 +104,21 @@ public class Cliente implements Runnable{
 							nomeGrupo = splitMsg.nextToken("|");
 							emitente = splitMsg.nextToken("|");
 							chatFrame.excUserDoGrupo(nomeGrupo,emitente);
-							chatFrame.incluirMsg(nomeGrupo,"O USUARIO '"+emitente+"' SAIU DO GRUPO\n");
+							chatFrame.incluirMsg(nomeGrupo,emitente,"O USUARIO '"+emitente+"' SAIU DO GRUPO\n");
 							break;
 						case "USER_ENTROU_GRUPO":
 							nomeGrupo = splitMsg.nextToken("|");
 							emitente = splitMsg.nextToken("|");
-							chatFrame.incluirMsg(nomeGrupo,"O USUARIO '"+emitente+"' ENTROU NO GRUPO\n");
+							chatFrame.addUserNoGrupo(nomeGrupo,emitente);
+							chatFrame.incluirMsg(nomeGrupo,emitente,"O USUARIO '"+emitente+"' ENTROU NO GRUPO\n");
+							break;
+						case "ADD_USERGRUPO":
+							String adduser = splitMsg.nextToken("|");
+							if(adduser.equals("ADICIONADO")){
+								chatFrame.showNotfication("Usuário Adicionado","Adicionado ao grupo com sucesso");
+							}else if(adduser.equals("RECUSADO")){
+								chatFrame.showNotfication("Usuário Recusado","Não foi possivel adicionar o usuário pois ele já está no grupo");
+							}
 							break;
 						default:
 							System.out.println("[Servidor]: Não foi possivel identificar o comando\n");
@@ -131,7 +134,6 @@ public class Cliente implements Runnable{
 				 }
 			}
 		}
-	   
 	   public void enviar(String opt,String destino, String msg){
 		  try{ /// Arquitetura [Opção] | [Destino] | [Mensagem]
 			saida.writeUTF(opt+ "|" +destino+ "|" +msg);
@@ -141,13 +143,11 @@ public class Cliente implements Runnable{
 			  JOptionPane.showMessageDialog(null, e, "Erro", JOptionPane.ERROR_MESSAGE);
 		  }
 	   }	
-	   
 	   public void startConexao_file(String tipo, String usuario, String cmFile){
 		   File arquivo = new File(cmFile);
-		   sockFile = new ArquivoSocket(ipServidor, porta, tipo, usuario, arquivo, nome);
+		   sockFile = new ArquivoSocket(ipServidor, porta, tipo, usuario, arquivo, nome, chatFrame.getProgressBar());
 		   sockFile.start();
 	   }
-	   
 	   public void criarGrupo(String grupo, DefaultListModel<String> usuarios){
 		   try{
 			   String env = "CRIAR_GRUPO|"+grupo+"|"+nome;
@@ -161,7 +161,6 @@ public class Cliente implements Runnable{
 				  JOptionPane.showMessageDialog(null, e, "Erro", JOptionPane.ERROR_MESSAGE);
 		   }
 	   }
-	   
 	   public void setChat(Janela_Chat frame){
 		   this.chatFrame = frame;
 	   }
@@ -173,7 +172,6 @@ public class Cliente implements Runnable{
 			e.printStackTrace();
 		}
 	   }
-	   
 	   public void fechar(){
 		   try{
 			   saida.writeUTF("FECHAR");

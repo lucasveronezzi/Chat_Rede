@@ -1,6 +1,5 @@
 package Chat;
 
-import javax.imageio.ImageIO;
 import javax.swing.*;
 import javax.swing.border.LineBorder;
 import javax.swing.border.TitledBorder;
@@ -8,22 +7,22 @@ import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
-import javax.swing.filechooser.FileNameExtensionFilter;
-
-import Painel.TESTE;
 import net.sf.jcarrierpigeon.WindowPosition;
 import net.sf.jtelegraph.Telegraph;
 import net.sf.jtelegraph.TelegraphQueue;
 import net.sf.jtelegraph.TelegraphType;
-
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.Dimension;
+import java.awt.FlowLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.KeyEvent;
+import java.awt.event.KeyListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.io.File;
 import java.util.StringTokenizer;
 
 public class Janela_Chat extends JFrame {
@@ -31,7 +30,7 @@ public class Janela_Chat extends JFrame {
 	private JPanel panelRight; 
 	private JScrollPane scrollPainel;
 	private JScrollPane scrollPainel2;
-	private JTextArea areaTextRecebe;
+	private JPanel pChatRecebe;
 	private JTextArea areaTextSend;
 	private JButton btnEnviar;
 	private JMenu menuGrupo;
@@ -44,6 +43,7 @@ public class Janela_Chat extends JFrame {
 	private JTextField textArquivo;
 	private DefaultListModel<String> clienteAll = new DefaultListModel<String>();
 	private DefaultListModel<String> clienteGrupo = new DefaultListModel<String>();
+	private DefaultListCellRenderer jlistIcon;
 	private int indexGrupo = 0;
 	private JTextField txtNomeGrupoAdd;
 	private Telegraph grupoAdd;
@@ -79,22 +79,56 @@ public class Janela_Chat extends JFrame {
 			if(chat.get(x).getNome().equals(chatNome)){
 				chat.remove(x);
 				listChat.setSelectedIndex(0);
-				areaTextRecebe = listChat.getSelectedValue().getJText();
+				pChatRecebe = listChat.getSelectedValue().getPanelChat();
 				chat.get(listChat.getSelectedIndex()).msgNaoLida = false;
-				scrollPainel2.setViewportView(areaTextRecebe);
+				scrollPainel2.setViewportView(pChatRecebe);
 				break;
 			}
 		}
 	}
-	public void incluirMsg(String chatNome, String msg){
+	public void incluirMsg(String chatNome,String emitente, String msg){
 		//for(ListaChat temp : chat){
 		for(int x=0;chat.size() > x;x++){
 			if(chat.get(x).getNome().equals(chatNome)){
-				chat.get(x).getJText().append(msg);
+				InfoChat chatTemp = chat.get(x);
+				chatTemp.addMsgToChat(msg,emitente);
+				scrollPainel2.revalidate();
 				if(!listChat.isSelectedIndex(x)){
-					chat.get(x).msgNaoLida = true;
+					chatTemp.msgNaoLida = true;
 				}
+				ajustaScroll();
 				break;
+			}
+		}
+	}
+	public JProgressBar getProgressBar(){
+		return listChat.getSelectedValue().progressBar;
+	}
+	public void incluirFile(String chatNome, String nomeFile){
+		for(int x=0;chat.size() > x;x++){
+			if(chat.get(x).getNome().equals(chatNome)){
+				InfoChat chatTemp = chat.get(x);
+				chatTemp.addFileToChat(nomeFile,chatNome,"recebendo");
+				chatTemp.buttonFile.addMouseListener(new MouseAdapter() {
+					@Override
+				    public void mouseClicked(MouseEvent e) {
+						client.startConexao_file("receber", chatNome, nomeFile);
+						chatTemp.buttonFile.setEnabled(false);
+					}
+				});
+				scrollPainel2.revalidate();
+				if(!listChat.isSelectedIndex(x)){
+					chatTemp.msgNaoLida = true;
+				}
+				ajustaScroll();
+				break;
+			}
+		}
+	}
+	public void addUserNoGrupo(String grupo, String user){
+		for(int x=0;chat.size() > x;x++){
+			if(chat.get(x).getNome().equals(grupo)){
+				chat.get(x).addUserToGrupo(user);
 			}
 		}
 	}
@@ -134,35 +168,91 @@ public class Janela_Chat extends JFrame {
 		panelRight.setPreferredSize(new Dimension(270, 500));
 		panelRight.setLayout(new BoxLayout(panelRight, BoxLayout.Y_AXIS));
 		
-		scrollPainel2 = new JScrollPane(areaTextRecebe);
-		scrollPainel2.setPreferredSize(new Dimension(200,320));
+		scrollPainel2 = new JScrollPane(pChatRecebe);
+		scrollPainel2.setPreferredSize(new Dimension(200,291));
 		scrollPainel2.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
 		panelRight.add(scrollPainel2);
 		
+		JPanel panelAtalho = new JPanel();
+		panelAtalho.setPreferredSize(new Dimension(200,25));
+		panelAtalho.setLayout(new FlowLayout(FlowLayout.LEFT, 15, 5));
+		panelRight.add(panelAtalho);
+		JButton labelAnexo = new JButton();
+		labelAnexo.setIcon(new ImageIcon("img\\icon-anexo.png"));
+		labelAnexo.setPreferredSize(new Dimension(22,22));
+		labelAnexo.addActionListener(new ActionListener() {
+		@Override
+		public void actionPerformed(ActionEvent  e) {
+			if(!listChat.isSelectionEmpty()){
+				InfoChat destino = listChat.getSelectedValue();
+				if(destino.tipo == 0){
+					String localFile = GetPath();
+					if(localFile != null){
+						File arquivo = new File(localFile);
+						destino.addFileToChat(arquivo.getName(), "Eu", "enviando");
+						client.startConexao_file("enviar", destino.getNome(), localFile);
+					}
+				}else
+					showNotfication("Alerta","Não é possivel enviar arquivo para um grupo.");
+			}
+			else
+				showNotfication("Alerta", "Selecione um chat para enviar um arquivo.");
+		}
+		});
+		panelAtalho.add(labelAnexo);
+		JButton labelEmoticon = new JButton();
+		labelEmoticon.setIcon(new ImageIcon("img\\icon-emoticon.png"));
+		labelEmoticon.setPreferredSize(new Dimension(22,22));
+		panelAtalho.add(labelEmoticon);
+		
+		JPanel panelBotton = new JPanel();
+		panelRight.add(panelBotton);
 		areaTextSend = new JTextArea();
-		areaTextSend.setColumns(10);
+		areaTextSend.setColumns(28);
+		areaTextSend.setRows(2);
 		areaTextSend.setLineWrap(true);
 		areaTextSend.setWrapStyleWord(true);
 		
+		areaTextSend.addKeyListener(new KeyListener(){
+		    @Override
+		    public void keyPressed(KeyEvent e){
+		    	if(e.getKeyCode() == KeyEvent.VK_ENTER){
+		    		e.consume();
+		    		System.out.println("teste");
+		    		btnEnviar.doClick();
+		    	 }
+		    }
+		    @Override
+		    public void keyTyped(KeyEvent e) {
+		    }
+		    @Override
+		    public void keyReleased(KeyEvent e) {
+		    }
+		});
+		
 		scrollPainel = new JScrollPane(areaTextSend);
 		scrollPainel.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
-		panelRight.add(scrollPainel);
+		panelBotton.add(scrollPainel);
 		
 		btnEnviar = new JButton("Enviar");
+		btnEnviar.setPreferredSize(new Dimension(55,55));
 		btnEnviar.setEnabled(false);
-		btnEnviar.addMouseListener(new MouseAdapter() {
+		panelBotton.add(btnEnviar);
+		btnEnviar.addActionListener(new ActionListener() {
 			@Override
-		    public void mouseClicked(MouseEvent e) {
+		    public void actionPerformed(ActionEvent  e) {
 				if(btnEnviar.isEnabled()){
 					String msg = areaTextSend.getText().trim();
 					if(!listChat.isSelectionEmpty()){
-						if(listChat.getSelectedValue().tipo == 1){
-							client.enviar("GROUP_MSG", listChat.getSelectedValue().getNome(), msg);
+						InfoChat chatSelect = listChat.getSelectedValue();
+						if(chatSelect.tipo == 1){
+							client.enviar("GROUP_MSG", chatSelect.getNome(), msg);
 						}else{
-							client.enviar("SINGLE_MSG",listChat.getSelectedValue().getNome(),msg);
+							client.enviar("SINGLE_MSG",chatSelect.getNome(),msg);
 						}
 						areaTextSend.setText("");
-						areaTextRecebe.append("Eu: " + msg + "\n");
+						chatSelect.addMsgToChat(msg, "Eu");
+						ajustaScroll();
 					}else
 						showNotfication("Alerta", "Selecione um chat para enviar sua mensagem.");
 				}
@@ -195,15 +285,12 @@ public class Janela_Chat extends JFrame {
 			}
 			
 		});
-		scrollPainel.setRowHeaderView(btnEnviar);
 		JMenuBar menuBar = new JMenuBar();
 		setJMenuBar(menuBar);
 		
 		menuGrupo = new JMenu("Grupo");
 		menuBar.add(menuGrupo);
-		menuGrupoCria();
-		menuGrupoAddUser();
-		menuEnviarArquivo();
+
 		JMenuItem g_opt1 = new JMenuItem(new AbstractAction("Criar um Grupo") {
 			 public void actionPerformed(ActionEvent ae) {
 				 clienteAll.clear();
@@ -242,10 +329,11 @@ public class Janela_Chat extends JFrame {
 	                if(confirm == 0){
 	                    client.sairGrupo(listChat.getSelectedValue().getNome());
 	                    chat.remove(listChat.getSelectedIndex());
+	                    indexGrupo--;
 	                    listChat.setSelectedIndex(0);
-	    				areaTextRecebe = listChat.getSelectedValue().getJText();
+	                    pChatRecebe = listChat.getSelectedValue().getPanelChat();
 	    				chat.get(listChat.getSelectedIndex()).msgNaoLida = false;
-	    				scrollPainel2.setViewportView(areaTextRecebe);
+	    				scrollPainel2.setViewportView(pChatRecebe);
 	                }
 			 }
 		});
@@ -263,6 +351,7 @@ public class Janela_Chat extends JFrame {
 			 }
 		});
 		menuArquivo.add(a_opt1);
+		a_opt1.setEnabled(false);
 		
 		addWindowListener(new java.awt.event.WindowAdapter() {
             public void windowClosing(java.awt.event.WindowEvent evt) {
@@ -278,24 +367,27 @@ public class Janela_Chat extends JFrame {
 			  public void valueChanged(ListSelectionEvent listSelectionEvent) {
 				  if(!listChat.isSelectionEmpty()){
 					  if (listSelectionEvent.getValueIsAdjusting()){
-						  areaTextRecebe = listChat.getSelectedValue().getJText();
+						  pChatRecebe = listChat.getSelectedValue().getPanelChat();
 						  chat.get(listChat.getSelectedIndex()).msgNaoLida = false;
-						  scrollPainel2.setViewportView(areaTextRecebe);
+						  scrollPainel2.setViewportView(pChatRecebe);
+						  ajustaScroll();
 					  }
 					  if(listChat.getSelectedValue().tipo == 1 && listChat.getSelectedIndex() > 0){
 						  g_opt3.setEnabled(true);
 						  g_opt2.setEnabled(true);
-						  darquivo_enviar.setEnabled(false);
+						  a_opt1.setEnabled(false);
 					  }else{
 						  g_opt3.setEnabled(false);
 						  g_opt2.setEnabled(false);
-						  darquivo_enviar.setEnabled(true);
+						  a_opt1.setEnabled(true);
 					  }
+					  if(listChat.getSelectedIndex() == 0)
+						  a_opt1.setEnabled(false);
 				  }
 			  }
 		});
 		listChat.setFixedCellHeight(30);
-		 
+
 		listChat.setCellRenderer(new DefaultListCellRenderer() {
 	          @Override
 	          public Component getListCellRendererComponent(JList<?> list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
@@ -312,7 +404,7 @@ public class Janela_Chat extends JFrame {
 	          		panel.add(this,BorderLayout.CENTER);
 	          		
 	          		if(temp.tipo == 0){
-	          			panel.setToolTipText("IP: "+temp.getNome());
+	          			panel.setToolTipText("IP: "+temp.getIp());
 	          		}else{	          			
 	          			panel.setToolTipText(temp.textToolTip);
 	          		}
@@ -320,12 +412,26 @@ public class Janela_Chat extends JFrame {
 	          	return panel;
 	          }
 			});
+		jlistIcon = new DefaultListCellRenderer() {
+	          @Override
+	          public Component getListCellRendererComponent(JList<?> list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
+	        	  	super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
+	        	  	if (value instanceof String) {
+		        	  	setText((String)value);
+		        	  	setIcon(new ImageIcon("img\\icon-on.png")); 
+	        	  	}
+	          	return this;
+	          }
+			};
+		menuGrupoCria();
+		menuGrupoAddUser();
+		menuEnviarArquivo();
 	}
 	
 	public void menuEnviarArquivo(){
 		SpringLayout springLayout = new SpringLayout();
-		darquivo_enviar = new JDialog(this, JDialog.ModalityType.DOCUMENT_MODAL);
-		darquivo_enviar.setBounds(450, 220, 500, 250);
+		darquivo_enviar = new JDialog(this, "Enviar Arquivo",JDialog.ModalityType.DOCUMENT_MODAL);
+		darquivo_enviar.setBounds(450, 220, 500, 180);
 		darquivo_enviar.setResizable(false);
 
 		JPanel panelBg = new JPanel();
@@ -346,7 +452,7 @@ public class Janela_Chat extends JFrame {
 		textArquivo.setColumns(30);
 		
 		JButton btnSelArquivo = new JButton();
-		btnSelArquivo.setIcon(new ImageIcon(TESTE.class.getResource("/org/jb2011/lnf/beautyeye/ch16_tree/imgs/treeDefaultOpen1.png")));
+		btnSelArquivo.setIcon(new ImageIcon(Janela_Chat.class.getResource("/org/jb2011/lnf/beautyeye/ch16_tree/imgs/treeDefaultOpen1.png")));
 		btnSelArquivo.setPreferredSize(new Dimension(20,20));
 		springLayout.putConstraint(SpringLayout.NORTH, btnSelArquivo, 0, SpringLayout.NORTH, textArquivo);
 		springLayout.putConstraint(SpringLayout.WEST, btnSelArquivo, 6, SpringLayout.EAST, textArquivo);
@@ -369,26 +475,19 @@ public class Janela_Chat extends JFrame {
 		btnEnviarArq.addActionListener(new ActionListener(){
 			public void actionPerformed(ActionEvent e) {
 				if(textArquivo.getText() != null){
+					File arquivo = new File(textArquivo.getText());
+					listChat.getSelectedValue().addFileToChat(arquivo.getName(), "Eu", "enviando");
 					client.startConexao_file("enviar", listChat.getSelectedValue().getNome(), textArquivo.getText());
 					darquivo_enviar.setVisible(false);
 				}
 			}
 		});
-		
-		percentFile = new JProgressBar();
-		percentFile.setStringPainted(true);
-		panelBg.add(percentFile);
-		springLayout.putConstraint(SpringLayout.NORTH, percentFile, 40, SpringLayout.NORTH, labArquivo);
-		springLayout.putConstraint(SpringLayout.WEST, percentFile, -10, SpringLayout.EAST, labArquivo);
-	}
-	public void atualizaSt(int n){
-		percentFile.setValue(n);
 	}
 	
 	public void menuGrupoAddUser(){
 		SpringLayout springLayout = new SpringLayout();
 		dgrupo_add = new JDialog(this, "Adicionar Usuário", JDialog.ModalityType.DOCUMENT_MODAL);
-		dgrupo_add.setBounds(450, 220, 350, 250);
+		dgrupo_add.setBounds(450, 220, 385, 350);
 		dgrupo_add.setResizable(false);
 		
 		JPanel panelBg = new JPanel();
@@ -398,7 +497,7 @@ public class Janela_Chat extends JFrame {
 		
 		JLabel labNomeGrupo = new JLabel("Nome do Grupo: ");
 		springLayout.putConstraint(SpringLayout.NORTH, labNomeGrupo, 21, SpringLayout.NORTH, panelBg);
-		springLayout.putConstraint(SpringLayout.WEST, labNomeGrupo, 25, SpringLayout.WEST, panelBg);
+		springLayout.putConstraint(SpringLayout.WEST, labNomeGrupo, 50, SpringLayout.WEST, panelBg);
 		panelBg.add(labNomeGrupo);
 		
 		txtNomeGrupoAdd = new JTextField();
@@ -410,11 +509,12 @@ public class Janela_Chat extends JFrame {
 		
 		JScrollPane scrollList = new JScrollPane();
 		springLayout.putConstraint(SpringLayout.NORTH, scrollList, 31, SpringLayout.NORTH, labNomeGrupo);
-		springLayout.putConstraint(SpringLayout.WEST, scrollList, -15, SpringLayout.WEST, labNomeGrupo);
+		springLayout.putConstraint(SpringLayout.WEST, scrollList, 20, SpringLayout.WEST, labNomeGrupo);
 		scrollList.setBorder(new TitledBorder(new LineBorder(null), "Usuários"));
 		panelBg.add(scrollList);
-		scrollList.setPreferredSize(new Dimension(100,120));
+		scrollList.setPreferredSize(new Dimension(170,170));
 		JList<String> listChat = new JList<String>(clienteGrupo);
+		listChat.setCellRenderer(jlistIcon);
 		listChat.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
 		scrollList.setViewportView(listChat);
 		
@@ -438,7 +538,7 @@ public class Janela_Chat extends JFrame {
 	public void menuGrupoCria(){
 		SpringLayout springLayout = new SpringLayout();		
 		dgrupo_criar = new JDialog(this, "Adicionar Grupo", JDialog.ModalityType.DOCUMENT_MODAL);
-		dgrupo_criar.setBounds(450, 220, 400, 300);
+		dgrupo_criar.setBounds(450, 220, 500, 350);
 		dgrupo_criar.setResizable(false);
 		
 		JPanel panelBg = new JPanel();
@@ -448,7 +548,7 @@ public class Janela_Chat extends JFrame {
 		
 		JLabel labNomeGrupo = new JLabel("Nome do Grupo: ");
 		springLayout.putConstraint(SpringLayout.NORTH, labNomeGrupo, 21, SpringLayout.NORTH, panelBg);
-		springLayout.putConstraint(SpringLayout.WEST, labNomeGrupo, 25, SpringLayout.WEST, panelBg);
+		springLayout.putConstraint(SpringLayout.WEST, labNomeGrupo, 130, SpringLayout.WEST, panelBg);
 		panelBg.add(labNomeGrupo);
 		
 		JTextField txtNomeGrupo = new JTextField();
@@ -459,37 +559,39 @@ public class Janela_Chat extends JFrame {
 		
 		JScrollPane scrollList1 = new JScrollPane();
 		springLayout.putConstraint(SpringLayout.NORTH, scrollList1, 31, SpringLayout.NORTH, labNomeGrupo);
-		springLayout.putConstraint(SpringLayout.WEST, scrollList1, -15, SpringLayout.WEST, labNomeGrupo);
+		springLayout.putConstraint(SpringLayout.WEST, scrollList1, 20, SpringLayout.WEST, panelBg);
 		scrollList1.setBorder(new TitledBorder(new LineBorder(null), "Todos"));
 		panelBg.add(scrollList1);
-		scrollList1.setPreferredSize(new Dimension(100,120));
+		scrollList1.setPreferredSize(new Dimension(170,170));
 		JList<String> listChat2 = new JList<String>(clienteAll);
+		listChat2.setCellRenderer(jlistIcon);
 		listChat2.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
 		scrollList1.setViewportView(listChat2);
 		
 		JScrollPane scrollList2 = new JScrollPane();
 		springLayout.putConstraint(SpringLayout.NORTH, scrollList2, 31, SpringLayout.NORTH, labNomeGrupo);
-		springLayout.putConstraint(SpringLayout.EAST, scrollList2, 15, SpringLayout.EAST, txtNomeGrupo);
+		springLayout.putConstraint(SpringLayout.WEST, scrollList2, 60, SpringLayout.EAST, scrollList1);
 		scrollList2.setBorder(new TitledBorder(new LineBorder(null), "Grupo"));
 		panelBg.add(scrollList2);
-		scrollList2.setPreferredSize(new Dimension(100,120));
+		scrollList2.setPreferredSize(new Dimension(170,170));
 		JList<String> listChat3 = new JList<String>(clienteGrupo);
+		listChat3.setCellRenderer(jlistIcon);
 		listChat3.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
 		scrollList2.setViewportView(listChat3);
 		
-		JButton btnAddToGrupo = new JButton(">>>");
+		JButton btnAddToGrupo = new JButton(">>");
 		springLayout.putConstraint(SpringLayout.NORTH, btnAddToGrupo, 30, SpringLayout.NORTH, scrollList1);
-		springLayout.putConstraint(SpringLayout.EAST, btnAddToGrupo, 40, SpringLayout.EAST, scrollList1);
+		springLayout.putConstraint(SpringLayout.WEST, btnAddToGrupo, 10, SpringLayout.EAST, scrollList1);
 		panelBg.add(btnAddToGrupo);
 		
-		JButton btnRemovToGrupo = new JButton("<<<");
+		JButton btnRemovToGrupo = new JButton("<<");
 		springLayout.putConstraint(SpringLayout.NORTH, btnRemovToGrupo, 10, SpringLayout.SOUTH, btnAddToGrupo);
-		springLayout.putConstraint(SpringLayout.EAST, btnRemovToGrupo, 40, SpringLayout.EAST, scrollList1);
+		springLayout.putConstraint(SpringLayout.WEST, btnRemovToGrupo, 10, SpringLayout.EAST, scrollList1);
 		panelBg.add(btnRemovToGrupo);
 		
 		JButton btnAdicionar = new JButton("Adicionar");
 		springLayout.putConstraint(SpringLayout.SOUTH, btnAdicionar, -10, SpringLayout.SOUTH, panelBg);
-		springLayout.putConstraint(SpringLayout.EAST, btnAdicionar, 210, SpringLayout.WEST, dgrupo_criar);
+		springLayout.putConstraint(SpringLayout.EAST, btnAdicionar, 254, SpringLayout.WEST, dgrupo_criar);
 		panelBg.add(btnAdicionar);
 		
 		btnAddToGrupo.addActionListener(new ActionListener(){
@@ -532,5 +634,8 @@ public class Janela_Chat extends JFrame {
             return fc.getSelectedFile().getPath();
          }
         return null;
+	}
+	public void ajustaScroll(){
+		scrollPainel2.getVerticalScrollBar().setValue(scrollPainel2.getVerticalScrollBar().getMaximum());
 	}
 }

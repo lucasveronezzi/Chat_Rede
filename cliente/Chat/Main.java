@@ -1,11 +1,14 @@
 package Chat;
 
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.awt.event.KeyEvent;
+import java.awt.event.KeyListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import javax.swing.*;
 
 public class Main extends JFrame{
-
 	public static Main frame;
 	public static void main (String[] args){
 		try{
@@ -22,12 +25,10 @@ public class Main extends JFrame{
 	
 	public Main(){
 		JFrame frame = this;
-		
 		JPanel panelIP = new JPanel();
 		JPanel panelPorta = new JPanel();
 		JPanel panelUser = new JPanel();
 		JPanel panelConect = new JPanel();
-		
 		JLabel labelIP = new JLabel("IP: ");
 		JLabel labelPorta = new JLabel("Porta: ");
 		JLabel labelUser = new JLabel("Usuário: ");
@@ -38,23 +39,40 @@ public class Main extends JFrame{
 		textPorta.setColumns(10);
 		JTextField textUser = new JTextField();
 		textUser.setColumns(10);
-		
 		JButton conect = new JButton("Conectar");
+		textUser.addKeyListener(new KeyListener(){
+		    @Override
+		    public void keyPressed(KeyEvent e){
+		    	if(e.getKeyCode() == KeyEvent.VK_ENTER){
+		    		e.consume();
+		    		conect.doClick();
+		    	 }
+		    }
+		    @Override
+		    public void keyTyped(KeyEvent e) {
+		    }
+		    @Override
+		    public void keyReleased(KeyEvent e) {
+		    }
+		});
 		panelConect.add(conect);
-		conect.addMouseListener(new MouseAdapter() {
+		conect.addActionListener(new ActionListener() {
 			@Override
-			public void mouseClicked(MouseEvent e) {
+			public void actionPerformed(ActionEvent e) {
 				if(textIP.getText().length() > 0 && 
 						textPorta.getText().length() > 0 && 
 							textUser.getText().length() > 0){
-					if(!textUser.getText().contains("|") && !textUser.getText().contains("ARQUIVO")){
+					if(!textUser.getText().contains("|") && 
+						!textUser.getText().contains("ARQUIVO") && 
+						!textUser.getText().contains("RECUSADO") &&
+						!textUser.getText().contains("ACCEPT_FILE")){
 						Cliente client = new Cliente(textIP.getText(), textPorta.getText(), textUser.getText());
 						if(client.conectado){
 							frame.setVisible(false);
 							new Janela_Chat(client);
 						}
 					}else{
-						JOptionPane.showMessageDialog(null, "Favor não usar | no nome", "Atenção!", JOptionPane.WARNING_MESSAGE);
+						JOptionPane.showMessageDialog(null, "Palavra reservada do sistema, por favor, escolha outra.", "Atenção!", JOptionPane.WARNING_MESSAGE);
 					}
 				}else{
 					JOptionPane.showMessageDialog(null, "Favor preencher todos os campos corretamente!", "Atenção!", JOptionPane.WARNING_MESSAGE);

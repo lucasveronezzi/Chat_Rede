@@ -2,8 +2,6 @@ package Painel;
 
 import java.awt.BorderLayout;
 import java.awt.Dimension;
-import java.awt.event.AdjustmentEvent;
-import java.awt.event.AdjustmentListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import javax.swing.*;
@@ -72,10 +70,6 @@ public class Janela_Servidor extends JFrame {
 		textPorta.setColumns(10);
 		
 		panelCenter = new JScrollPane();
-		panelCenter.getVerticalScrollBar().addAdjustmentListener(new AdjustmentListener() {  
-		    public void adjustmentValueChanged(AdjustmentEvent e) {  
-		         e.getAdjustable().setValue(e.getAdjustable().getMaximum());  
-		}});
 		container.add(panelCenter, BorderLayout.CENTER);
 		panelRight = new JScrollPane();
 		panelRight.setPreferredSize(new Dimension(250, 100));
@@ -110,8 +104,12 @@ public class Janela_Servidor extends JFrame {
 	
 	public void addMsgTerminal(String msg){
 		textTeminal.append(msg);
+		ajustaScroll();
 	}
-	public void addCliente(String cliente, String ip, int porta){
-		textClientes.append(cliente+ "(" +ip+ ", " +String.valueOf(porta)+ ")\n");
+	public void addCliente(String cliente, String ip, int porta, String data){
+		textClientes.append(cliente+ "(" +ip+ ", " +String.valueOf(porta)+ ") "+data+"\n");
+	}
+	public void ajustaScroll(){
+		panelCenter.getVerticalScrollBar().setValue(panelCenter.getVerticalScrollBar().getMaximum());
 	}
 }

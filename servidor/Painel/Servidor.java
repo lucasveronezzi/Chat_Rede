@@ -1,15 +1,16 @@
 package Painel;
 
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.io.BufferedInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.*;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 import java.util.StringTokenizer;
 import javax.swing.JOptionPane;
@@ -75,17 +76,19 @@ public class Servidor implements Runnable{
 				}else 
 					if(opt.equals("CON_FILE_ACCEPT")){
 						String emitente = splitMsg.nextToken("|");
+						String nomeFile = splitMsg.nextToken("|");
 						for(int x=0;arquivos.size() >x;x++){
-							if(arquivos.get(x).emitente.equals(emitente)){
+							if(arquivos.get(x).emitente.equals(emitente) && arquivos.get(x).nomeArquivo.equals(nomeFile)){
 								arquivos.get(x).socketDestino = socketValidar;
-								arquivos.get(x).redirecionarFile();
+								arquivos.get(x).enviarFile();
+								break;
 							}
 						}
 						return "ACCEPT_FILE";
 					}
 				saida.writeUTF("RECUSADO");
 			 	terminal.addMsgTerminal("[Servidor]:Cliente("+socketValidar.getInetAddress().getHostAddress()+") recusado, nome "+nome+" já existe\n");
-				return null;
+				return "RECUSADO";
 			}else 
 				if(opt.equals("CON_CLIENTE")){
 					grupo.get(0).addCliente(nome);
@@ -93,38 +96,13 @@ public class Servidor implements Runnable{
 				}
 				saida.writeUTF("RECUSADO");
 				terminal.addMsgTerminal("[Servidor]:Cliente("+socketValidar.getInetAddress().getHostAddress()+") recusado, nome "+nome+" já existe\n");
-				return null;
+				return "RECUSADO";
 		} catch (IOException e) {
 			e.printStackTrace();
-			return null;
+			return "RECUSADO";
 		}
 	 }
-	 
-	 public void redirecionarMSG(String nome, String msg){
-		 for(int x=0;client.size() > x;x++){
-			 if(client.get(x).nome.equals(nome)){
-				 Cliente destino = client.get(x);
-				 try {
-					destino.saida.writeUTF(msg);
-					terminal.addMsgTerminal("[Servidor] Mensagem Enviada com sucesso!\n");
-				} catch (IOException e) {
-					terminal.addMsgTerminal("[Servidor] Não foi possivel enviar a mensagem!Erro:\n"+e.getMessage());
-				}
-				 break;
-			 }
-		 }
-	 }
-	 
-	 public void redirecionarTodos(String msg){
-		 try{
-			 for(int x=0;client.size() > x;x++){
-				client.get(x).saida.writeUTF(msg);
-			 }
-		 }catch(IOException e) {
-			e.printStackTrace();
-		}
-	 }
-	 
+ 
 	 public void RemoverClient(String nome){
 		 for(int x=0;client.size() > x;x++){
 			 if(client.get(x).nome.equals(nome)){
@@ -169,7 +147,9 @@ public class Servidor implements Runnable{
 					enviarGrupos(this);
 					enviarClientesON(this);
 					terminal.addMsgTerminal("[Servidor]: Nova conexão com o cliente \"" +  nome +"\"("+ip+")\n");
-					terminal.addCliente(nome, ip, socket.getPort());
+					DateFormat dateFormat = new SimpleDateFormat("HH:mm dd/MM/yy");
+					Date date = new Date();
+					terminal.addCliente(nome, ip, socket.getPort(), dateFormat.format(date));
 			 }catch(IOException e) {
 					e.printStackTrace();
 			 }
@@ -247,6 +227,7 @@ public class Servidor implements Runnable{
 					 			if(grupoT.nome.equals(grupoR)){
 					 				if(!grupoT.clientes.contains(destino)){
 						 				grupoT.clientes.add(destino);
+						 				redirecionarMSG(nome,"ADD_USERGRUPO|ADICIONADO");
 						 				String usuariosGrupo = "";
 						 				for(int i=0;grupoT.clientes.size() > i;i++){
 						 					if(!grupoT.clientes.get(i).equals(destino)){
@@ -258,6 +239,8 @@ public class Servidor implements Runnable{
 						 				msgEnviar = "GRUPO_ADD|"+grupoT.nome+"|"+usuariosGrupo;
 								 		redirecionarMSG(destino,msgEnviar);
 						 				break;
+					 				}else{
+					 					redirecionarMSG(nome,"ADD_USERGRUPO|RECUSADO");
 					 				}
 					 			}
 					 		}
@@ -274,6 +257,31 @@ public class Servidor implements Runnable{
 				 }
 			}catch(IOException e) {
 				RemoverClient(nome);
+				e.printStackTrace();
+			}
+		 }
+		 
+		 public void redirecionarMSG(String nome, String msg){
+			 for(int x=0;client.size() > x;x++){
+				 if(client.get(x).nome.equals(nome)){
+					 Cliente destino = client.get(x);
+					 try {
+						destino.saida.writeUTF(msg);
+						terminal.addMsgTerminal("[Servidor] Mensagem Enviada com sucesso!\n");
+					} catch (IOException e) {
+						terminal.addMsgTerminal("[Servidor] Não foi possivel enviar a mensagem!Erro:\n"+e.getMessage());
+					}
+					 break;
+				 }
+			 }
+		 }
+		 
+		 public void redirecionarTodos(String msg){
+			 try{
+				 for(int x=0;client.size() > x;x++){
+					client.get(x).saida.writeUTF(msg);
+				 }
+			 }catch(IOException e) {
 				e.printStackTrace();
 			}
 		 }
@@ -334,9 +342,8 @@ public class Servidor implements Runnable{
 			if(arquivos.get(x).socket.equals(sk)){
 				Arquivo temp = arquivos.get(x);
 				try {
-					temp.socket.close();
-					temp.socketDestino.close();
 					arquivos.remove(x);
+					temp.socketDestino.close();
 				} catch (IOException e) {
 					e.printStackTrace();
 				}
@@ -351,6 +358,7 @@ public class Servidor implements Runnable{
 		 public Socket socket;
 		 public Socket socketDestino;
 		 private DataOutputStream saida;
+		 private ByteArrayOutputStream arquivoTemp;
 		 
 		 public Arquivo(String destino, String emitente, String nomeArquivo){
 			 this.destino = destino;
@@ -362,31 +370,55 @@ public class Servidor implements Runnable{
 			 this.socket = socket;
 		 }
 		 
-		 public void redirecionarFile(){
+		 public void recebeFile(){
 			 try{
-					saida = new DataOutputStream(socket.getOutputStream());
-					saida.writeUTF("CON_RESPOSTA|OK");
+					//saida = new DataOutputStream(socket.getOutputStream());
+					//saida.writeUTF("CON_RESPOSTA|OK");
 					InputStream entradaArquivo = socket.getInputStream();
-					OutputStream saidaArquivo = socketDestino.getOutputStream();
+					//OutputStream saidaArquivo = socketDestino.getOutputStream();
 	                byte[] bytArquivo = new byte[1000];
+	                arquivoTemp = new ByteArrayOutputStream();
 	                int tmByt;
 	                System.out.println("recebendo arquivo");
 	                while((tmByt = entradaArquivo.read(bytArquivo)) > 0){
 	                	 System.out.println(tmByt);
-	                	 saidaArquivo.write(bytArquivo,0,tmByt);
+	                	 arquivoTemp.write(bytArquivo, 0, tmByt);
+	                	 //saidaArquivo.write(bytArquivo,0,tmByt);
 	                }
-	                saida.writeUTF("ENVIADO");
-	                saidaArquivo.flush();
-	                saidaArquivo.close();
+	                //saida.writeUTF("ENVIADO");
+	               // saidaArquivo.flush();
+	               // saidaArquivo.close();
 	                System.out.println("arquivo recebido com sucesso");
-	                finalizar_arquivo(socket);
+	                socket.close();
+	                for(int x=0; client.size() > x;x++){
+	   				 if(client.get(x).nome.equals(emitente))
+	   					 client.get(x).redirecionarMSG(destino,"CON_FILE_SEND|"+emitente+"|"+nomeArquivo);
+	                }
+	                //finalizar_arquivo(socket);
 				}catch(IOException e) {
+					finalizar_arquivo(socket);
 					e.printStackTrace();
 				}
 		 }
+		 public void enviarFile(){
+			 try {
+				OutputStream saidaArquivo = socketDestino.getOutputStream();
+				System.out.println("Enviar arquivo");
+				arquivoTemp.writeTo(saidaArquivo);
+				finalizar_arquivo(socket);
+			 } catch (IOException e) {
+				 finalizar_arquivo(socket);
+				e.printStackTrace();
+			}
+		 }
 		 @Override
 		 public void run(){
-			redirecionarMSG(destino,"CON_FILE_SEND|"+emitente+"|"+nomeArquivo);
+			 /*for(int x=0; client.size() > x;x++){
+				 if(client.get(x).nome.equals(emitente))
+					 client.get(x).redirecionarMSG(destino,"CON_FILE_SEND|"+emitente+"|"+nomeArquivo);
+			 }*/
+			 
+			 recebeFile();
 		 }
 	 }
 	 
