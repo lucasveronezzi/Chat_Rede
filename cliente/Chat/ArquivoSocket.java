@@ -41,15 +41,16 @@ public class ArquivoSocket extends Thread{
 	public void enviar(){
 		try {
 			saida.writeUTF("CON_FILE_REQUEST|"+meuNome+"|"+usuario+"|"+obArquivo.arquivo.getName()+"|"+obArquivo.arquivo.length());
-			int arqTamanho = (int)Math.ceil(obArquivo.arquivo.length() / 100);
-			if(arqTamanho == 0) arqTamanho = 1;
+			int tmPorcento = (int)Math.ceil(obArquivo.arquivo.length() / 100);
+			if(tmPorcento == 0) tmPorcento = 1;
 			buffArquivo = new BufferedInputStream(new FileInputStream(obArquivo.arquivo));
 			saidaStream = socketFile.getOutputStream();
 			byte[] bytArquivo = new byte[1000];
-			int tmByt, porcento = 0;
+			int tmByt; 
+			int tmLido = 0;
 			 while((tmByt = buffArquivo.read(bytArquivo)) > 0){
-				 porcento = porcento + tmByt;
-				 obArquivo.barraProgresso.setValue(porcento/arqTamanho);
+				 tmLido = tmLido + tmByt;
+				 obArquivo.barraProgresso.setValue(tmLido/tmPorcento);
 				 saidaStream.write(bytArquivo, 0, tmByt);
 			 }
 			 obArquivo.barraProgresso.setValue(100);
@@ -68,14 +69,15 @@ public class ArquivoSocket extends Thread{
 			saida.writeUTF("CON_FILE_ACCEPT|"+meuNome+"|"+usuario+"|"+obArquivo.arquivo.getName());
 			FileOutputStream fos = new FileOutputStream(obArquivo.arquivo.getAbsolutePath());
 			entradaStream = socketFile.getInputStream();
-			int arqTamanho = (int)Math.ceil(obArquivo.tamanho / 100);
-			if(arqTamanho == 0) arqTamanho = 1;
+			int tmPorcento = (int)Math.ceil(obArquivo.tamanho / 100);
+			if(tmPorcento == 0) tmPorcento = 1;
 			byte[] bytArquivo = new byte[1000];
-			int tmByt, porcento = 0;
+			int tmByt;
+			int tmLido = 0;
             System.out.println("recebendo arquivo");
             while((tmByt = entradaStream.read(bytArquivo)) > 0){
-            	porcento = porcento + tmByt;
-            	obArquivo.barraProgresso.setValue(porcento/arqTamanho);
+            	tmLido = tmLido + tmByt;
+            	obArquivo.barraProgresso.setValue(tmLido/tmPorcento);
 	            fos.write(bytArquivo, 0, tmByt);
             }
             obArquivo.barraProgresso.setValue(100);

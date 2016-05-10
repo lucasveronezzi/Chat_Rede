@@ -35,6 +35,8 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.HashMap;
+import java.util.Map.Entry;
 import java.awt.event.ActionEvent;
 import java.awt.Color;
 import java.awt.Component;
@@ -54,10 +56,11 @@ import javax.swing.JTable;
 import javax.swing.JTextArea;
 import javax.swing.JEditorPane;
 import java.awt.Font;
+import javax.swing.JTextPane;
 
 
 public class TESTE extends JFrame {
-
+static HashMap<String, String> smileys = new HashMap<String, String>();
 	private JPanel contentPane;
 	private JTextField txtDasd;
 	private JTextField textField;
@@ -89,30 +92,30 @@ public class TESTE extends JFrame {
 		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		setBounds(100, 100, 300, 250);
 		
-		JPanel panel =  new JPanel();
-		panel.setBorder(new EtchedBorder(EtchedBorder.LOWERED, null, null));
-		getContentPane().add(panel);
-		panel.setFont(new Font("Times New Roman", Font.PLAIN, 14));
+		JPanel panel = new JPanel();
+		getContentPane().add(panel, BorderLayout.CENTER);
 		
-		txtDasdsadas = new JTextField();
-		txtDasdsadas.setForeground(new Color(220, 20, 60));
-		txtDasdsadas.setText("dasdsadas");
-		panel.add(txtDasdsadas);
-		txtDasdsadas.setColumns(10);
+		HashMap<String, String> smileys = new HashMap<String, String>();
+		smileys.put(":\\)", "<img src='file:C:/Chat/img/icon-emoticon.png'/>");
+		smileys.put(":O", "<img src='file:C:/Chat/img/icon-emoticon.png'/>");
+		smileys.put(":\\(", "<img src='file:C:/Chat/img/icon-emoticon.png'/>");
 		
-		JPanel panel_1 = new JPanel();
-		panel.add(panel_1);
-		panel_1.setLayout(new FlowLayout(FlowLayout.LEFT, 5, 5));
-		File arquivo = new File("C:\\Chat\\Files\\conta.txt");
-		JProgressBar progressBar = new JProgressBar();
-		panel_1.add(progressBar);
-		JButton abrir = new JButton("Abrir");
-		panel_1.add(abrir);
+		String teste = " :) lucas bduasbd diuashdias dishadisad fala ai doidod";
 		
+		for(Entry<String, String> smiley : smileys.entrySet())
+			teste = teste.replaceAll(smiley.getKey(), smiley.getValue());
 		
+		JTextPane txtpnLucas = new JTextPane();
+		txtpnLucas.setFont(new Font("Century Gothic", Font.PLAIN, 11));
+		
+		txtpnLucas.setContentType("text/html");
+		txtpnLucas.insertIcon(new ImageIcon("img\\chat.png"));
+		txtpnLucas.setText(teste);
 		
 		
+
 		
+		panel.add(txtpnLucas);
 		
 	}
 	

@@ -63,7 +63,7 @@ public class Janela_Chat extends JFrame {
 		tclient.start();
 		ini_CompGraficos();
 		try {
-			iconLoading = new ImageIcon(new URL("file:///C:/Users/Lucas/Documents/eclipse/Chat_Rede/img/icon-loading.gif"));
+			iconLoading = new ImageIcon(new URL("file:///C:/Chat/img/icon-loading.gif"));
 		} catch (MalformedURLException e) {
 			JOptionPane.showMessageDialog(null, e, "Erro", JOptionPane.ERROR_MESSAGE);
 		}
@@ -89,10 +89,12 @@ public class Janela_Chat extends JFrame {
 		for(int x=0;chat.size() > x;x++){
 			if(chat.get(x).getNome().equals(chatNome)){
 				chat.remove(x);
-				listChat.setSelectedIndex(0);
-				pChatRecebe = listChat.getSelectedValue().getPanelChat();
-				chat.get(listChat.getSelectedIndex()).msgNaoLida = false;
-				scrollPainel2.setViewportView(pChatRecebe);
+				if(listChat.isSelectionEmpty()){
+					listChat.setSelectedIndex(0);
+					pChatRecebe = listChat.getSelectedValue().getPanelChat();
+					chat.get(listChat.getSelectedIndex()).msgNaoLida = false;
+					scrollPainel2.setViewportView(pChatRecebe);
+				}
 				break;
 			}
 		}
@@ -348,10 +350,12 @@ public class Janela_Chat extends JFrame {
 	                    client.sairGrupo(listChat.getSelectedValue().getNome());
 	                    chat.remove(listChat.getSelectedIndex());
 	                    indexGrupo--;
-	                    listChat.setSelectedIndex(0);
-	                    pChatRecebe = listChat.getSelectedValue().getPanelChat();
-	    				chat.get(listChat.getSelectedIndex()).msgNaoLida = false;
-	    				scrollPainel2.setViewportView(pChatRecebe);
+	                    if(listChat.isSelectionEmpty()){
+		                    listChat.setSelectedIndex(0);
+		                    pChatRecebe = listChat.getSelectedValue().getPanelChat();
+		    				chat.get(listChat.getSelectedIndex()).msgNaoLida = false;
+		    				scrollPainel2.setViewportView(pChatRecebe);
+	                    }
 	                }
 			 }
 		});

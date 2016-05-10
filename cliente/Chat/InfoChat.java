@@ -10,14 +10,21 @@ import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map.Entry;
+
 import javax.swing.BoxLayout;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JProgressBar;
+import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
+import javax.swing.JTextPane;
+import javax.swing.ScrollPaneConstants;
+import javax.swing.ScrollPaneLayout;
 
 public class InfoChat {
 	public String textToolTip = "Participantes: ";
@@ -33,9 +40,8 @@ public class InfoChat {
 	private List<String> usuarios;
 	private Color clEmitente = new Color(239, 243, 255);
 	private Color clDestino =new Color(229, 247, 253);
-	private Font fontMsg = new Font("Verdana", Font.PLAIN, 12); 
-	private Font FontHeader = new Font("Calibri Light", Font.BOLD, 14);
-	private Font fontFile = new Font("Centaur", Font.BOLD, 13);
+	private Font FontHeader = new Font("Century Gothic", Font.BOLD, 12);
+	private Font fontFile = new Font("Century Gothic", Font.BOLD, 11);
 	private DateFormat dateFormat = new SimpleDateFormat("HH:mm");
 	private ImageIcon iconMsgNLIda = new ImageIcon("img\\chat.png");
 	private ImageIcon iconDownload = new ImageIcon("img\\icon-file.png");
@@ -98,20 +104,19 @@ public class InfoChat {
 		labelHora.setOpaque(true);
 		labelHora.setPreferredSize(new Dimension(60,20));
 		
-		JTextArea labelMsg = new JTextArea();
-		labelMsg.setFont(fontMsg);
+		JTextPane labelMsg = new JTextPane();
 		labelMsg.setEditable(false);
-		labelMsg.setLineWrap(true);
-		labelMsg.setWrapStyleWord(true);
-		
-		labelMsg.setMargin(new Insets(10,25,10,40));
+		labelMsg.setContentType("text/html");
+		labelMsg.setMargin(new Insets(5,10,5,15));
+		msg = replaceEmoticon(msg);
+		msg = "<p style=\"font-size: 11px;width: 255px; word-wrap: break-word;margin:0px\">"+msg+"</p>";
 		labelMsg.setText(msg);
 		
 		if(emitente.equals("Eu"))
 			labelMsg.setBackground(clEmitente);
 		else
 			labelMsg.setBackground(clDestino);
-
+		
 		panelHeader.add(labelNome);
 		panelHeader.add(labelHora);
 		panel.add(panelHeader);
@@ -199,5 +204,13 @@ public class InfoChat {
 			 this.barraProgresso = progresso;
 			 this.button = button;
 		 }
+	 }
+	 public String replaceEmoticon(String msg){
+		 HashMap<String, String> smileys = new HashMap<String, String>();
+		 smileys.put(":\\)","<div style=\"background: url(file:C:/Chat/img/icon-emoticon.png); width:20px;height:20px;\"></div>");
+		 
+		 for(Entry<String, String> smiley : smileys.entrySet())
+			 msg = msg.replaceAll(smiley.getKey(), smiley.getValue());
+		 return msg;
 	 }
 }
