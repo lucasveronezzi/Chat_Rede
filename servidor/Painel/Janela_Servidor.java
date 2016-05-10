@@ -14,7 +14,6 @@ public class Janela_Servidor extends JFrame {
 	private JPanel panelBot;
 	private JButton iniciar;
 	private JButton pausar;
-	private JButton threads;
 	private JLabel labelPorta;
 	private JTextField textPorta;
 	private JTextArea textTeminal;
@@ -36,7 +35,6 @@ public class Janela_Servidor extends JFrame {
             }
         });
 	}
-	
 	public Janela_Servidor(){
 		setTitle("Terminal do Chat de Rede");
 		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
@@ -56,8 +54,6 @@ public class Janela_Servidor extends JFrame {
 		pausar = new JButton("Pausar Servidor");
 		panelTop.add(pausar);
 		pausar.setEnabled(false);
-		threads = new JButton("threads");
-		panelTop.add(threads);
 		
 		panelBot = new JPanel();
 		container.add(panelBot, BorderLayout.PAGE_END);
@@ -101,15 +97,20 @@ public class Janela_Servidor extends JFrame {
 			}
 		});
 	}
-	
 	public void addMsgTerminal(String msg){
+		textTeminal.append(msg);
+		ajustaScroll();
+	}
+	public void addErroTerminal(String msg){
 		textTeminal.append(msg);
 		ajustaScroll();
 	}
 	public void addCliente(String cliente, String ip, int porta, String data){
 		textClientes.append(cliente+ "(" +ip+ ", " +String.valueOf(porta)+ ") "+data+"\n");
+		ajustaScroll();
 	}
 	public void ajustaScroll(){
 		panelCenter.getVerticalScrollBar().setValue(panelCenter.getVerticalScrollBar().getMaximum());
+		panelRight.getVerticalScrollBar().setValue(panelRight.getVerticalScrollBar().getMaximum());
 	}
 }

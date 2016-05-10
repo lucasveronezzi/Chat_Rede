@@ -1,55 +1,53 @@
 package Chat;
 
-import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.Font;
 import java.awt.Insets;
+import java.io.File;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import javax.swing.BoxLayout;
-import javax.swing.DefaultListModel;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JLabel;
-import javax.swing.JList;
 import javax.swing.JPanel;
 import javax.swing.JProgressBar;
 import javax.swing.JTextArea;
-import javax.swing.JTextField;
-import javax.swing.SpringLayout;
-import javax.swing.border.EtchedBorder;
 
 public class InfoChat {
+	public String textToolTip = "Participantes: ";
+	public JLabel labMsgNLida = new JLabel();
+	public boolean msgNaoLida = false;
+	public ImageIcon icon;
+	public List<Arquivo> arquivos;
+	public int tipo;
+	
 	private String nome;
 	private String ip;
-	public String textToolTip = "Participantes: ";
-	public ImageIcon icon;
-	public JButton buttonFile;
-	public JProgressBar progressBar;
 	private JPanel pChatRecebe;
-	public JLabel labMsgNLida=new JLabel();
 	private List<String> usuarios;
-	private DateFormat dateFormat = new SimpleDateFormat("HH:mm");
-	public boolean msgNaoLida = false;
-	private int tmPanel = 0;
-	public int tipo;
 	private Color clEmitente = new Color(239, 243, 255);
 	private Color clDestino =new Color(229, 247, 253);
 	private Font fontMsg = new Font("Verdana", Font.PLAIN, 12); 
 	private Font FontHeader = new Font("Calibri Light", Font.BOLD, 14);
 	private Font fontFile = new Font("Centaur", Font.BOLD, 13);
+	private DateFormat dateFormat = new SimpleDateFormat("HH:mm");
+	private ImageIcon iconMsgNLIda = new ImageIcon("img\\chat.png");
+	private ImageIcon iconDownload = new ImageIcon("img\\icon-file.png");
+	private int tmPanel = 0;
 	
 	public InfoChat(String nome, String ip, int tipo){
 		this.nome = nome;
 		this.ip = ip;	
 		this.tipo = tipo;
 		if(tipo == 1) usuarios = new ArrayList<String>();
-		labMsgNLida.setIcon(new ImageIcon("img\\chat.png"));
+		else arquivos = new ArrayList<Arquivo>();
+		labMsgNLida.setIcon(iconMsgNLIda);
 		labMsgNLida.setVisible(false);
 		pChatRecebe = new JPanel();
 		pChatRecebe.setLayout(new WrapLayout());
@@ -68,9 +66,6 @@ public class InfoChat {
 			icon = new ImageIcon("img\\user-icon-on.png");
 		else
 			icon = new ImageIcon("img\\user-group-icon.png");
-	}
-	public void setIconOff(){
-		icon = new ImageIcon("img\\user-icon-off.png");
 	}
 	public void addUserToGrupo(String user){
 		usuarios.add(user);
@@ -128,10 +123,15 @@ public class InfoChat {
 		panel.revalidate();
 		tmPanel = tmPanel + panel.getHeight();
 	}
-	public void addFileToChat(String nomeFile, String emitente, String opt){
+	public void addFileToChat(String path, String emitente, String opt, String tamanhoFile){
+		JProgressBar bar = new JProgressBar();
+		JButton buttonFile = new JButton();
+		String nomeFile = new File(path).getName();
 		Date date = new Date();
 		JPanel panel = new JPanel();
 		panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
+		
+		arquivos.add(new Arquivo(path, tamanhoFile, bar, buttonFile));
 		
 		JPanel panelHeader = new JPanel();
 		panelHeader.setLayout(new FlowLayout(FlowLayout.LEFT, 5, 0));
@@ -139,18 +139,20 @@ public class InfoChat {
 		JLabel labelNome = new JLabel(emitente+": ");
 		labelNome.setFont(FontHeader);
 		labelNome.setOpaque(true);
-		labelNome.setPreferredSize(new Dimension(315,20));
-		
+		labelNome.setPreferredSize(new Dimension(310,20));
 		JLabel labelHora = new JLabel("["+dateFormat.format(date)+"]");
 		labelHora.setFont(FontHeader);
 		labelHora.setOpaque(true);
+		labelHora.setPreferredSize(new Dimension(60,20));
 		
 		JPanel panelFile = new JPanel();
-		buttonFile = new JButton();
-		buttonFile.setIcon(new ImageIcon("img\\icon-file.png"));
+		buttonFile.setIcon(iconDownload);
+		buttonFile.setPreferredSize(new Dimension(40,40));
+		buttonFile.setOpaque(true);
 		panelFile.add(buttonFile);
 		
 		JPanel panel_1 = new JPanel();
+		panel_1.setPreferredSize(new Dimension(260,45));
 		panelFile.add(panel_1);
 		panel_1.setLayout(new BoxLayout(panel_1, BoxLayout.Y_AXIS));
 		
@@ -159,11 +161,12 @@ public class InfoChat {
 		labelNomeFile.setOpaque(true);
 		panel_1.add(labelNomeFile);
 		
-		progressBar = new JProgressBar();
-		progressBar.setStringPainted(true);
-		panel_1.add(progressBar);
+		bar.setStringPainted(true);
+		bar.setPreferredSize(new Dimension(100,20));
+		panel_1.add(bar);
 
 		if(opt.equals("recebendo")){
+			buttonFile.setToolTipText("Baixar Arquivo");
 			labelNomeFile.setBackground(clDestino);
 			panel_1.setBackground(clDestino);
 			panelFile.setBackground(clDestino);
@@ -184,4 +187,17 @@ public class InfoChat {
 		panel.revalidate();
 		tmPanel = tmPanel + panel.getHeight();
 	}
+	 class Arquivo{
+		 public File arquivo;
+		 public int tamanho;
+		 public JButton button;
+		 public JProgressBar barraProgresso;
+		 
+		 public Arquivo(String path, String tamanho, JProgressBar progresso, JButton button){
+			 this.arquivo = new File(path);
+			 this.tamanho = Integer.parseInt(tamanho);
+			 this.barraProgresso = progresso;
+			 this.button = button;
+		 }
+	 }
 }

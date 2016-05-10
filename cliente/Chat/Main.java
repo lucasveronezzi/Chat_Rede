@@ -1,11 +1,8 @@
 package Chat;
-
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
 import javax.swing.*;
 
 public class Main extends JFrame{
@@ -16,7 +13,6 @@ public class Main extends JFrame{
 			UIManager.put("RootPane.setupButtonVisible", false);
 			frame = new Main();
 			frame.setVisible(true);
-			
 		}catch(ClassNotFoundException | InstantiationException | IllegalAccessException
 				| UnsupportedLookAndFeelException e) {
 			JOptionPane.showMessageDialog(null, e, "Erro", JOptionPane.ERROR_MESSAGE);
@@ -32,7 +28,6 @@ public class Main extends JFrame{
 		JLabel labelIP = new JLabel("IP: ");
 		JLabel labelPorta = new JLabel("Porta: ");
 		JLabel labelUser = new JLabel("Usuário: ");
-		
 		JTextField textIP = new JTextField("192.168.1.31");
 		textIP.setColumns(10);
 		JTextField textPorta = new JTextField("555");
@@ -63,6 +58,7 @@ public class Main extends JFrame{
 						textPorta.getText().length() > 0 && 
 							textUser.getText().length() > 0){
 					if(!textUser.getText().contains("|") && 
+						!textUser.getText().contains("ACEITO") &&
 						!textUser.getText().contains("ARQUIVO") && 
 						!textUser.getText().contains("RECUSADO") &&
 						!textUser.getText().contains("ACCEPT_FILE")){

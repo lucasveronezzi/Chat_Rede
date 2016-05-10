@@ -20,6 +20,8 @@ import javax.swing.JList;
 import javax.swing.JScrollPane;
 import javax.swing.JButton;
 import javax.swing.JToggleButton;
+import javax.swing.ProgressMonitor;
+import javax.swing.ProgressMonitorInputStream;
 import javax.swing.BoxLayout;
 import javax.swing.ImageIcon;
 import javax.swing.JSeparator;
@@ -27,6 +29,12 @@ import java.awt.SystemColor;
 import javax.swing.JProgressBar;
 import java.awt.FlowLayout;
 import java.awt.event.ActionListener;
+import java.io.BufferedInputStream;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.InputStream;
 import java.awt.event.ActionEvent;
 import java.awt.Color;
 import java.awt.Component;
@@ -57,6 +65,7 @@ public class TESTE extends JFrame {
 	private JTextField textField_2;
 	private JTextField textField_3;
 	private JTable table;
+	private JTextField txtDasdsadas;
 
 	/**
 	 * Launch the application.
@@ -73,8 +82,9 @@ public class TESTE extends JFrame {
 
 	/**
 	 * Create the frame.
+	 * @throws IOException 
 	 */
-	public TESTE() {
+	public TESTE(){
 		setIconImage(Toolkit.getDefaultToolkit().getImage(TESTE.class.getResource("/org/jb2011/lnf/beautyeye/ch1_titlepane/imgs/ifi1.png")));
 		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		setBounds(100, 100, 300, 250);
@@ -84,12 +94,23 @@ public class TESTE extends JFrame {
 		getContentPane().add(panel);
 		panel.setFont(new Font("Times New Roman", Font.PLAIN, 14));
 		
+		txtDasdsadas = new JTextField();
+		txtDasdsadas.setForeground(new Color(220, 20, 60));
+		txtDasdsadas.setText("dasdsadas");
+		panel.add(txtDasdsadas);
+		txtDasdsadas.setColumns(10);
+		
 		JPanel panel_1 = new JPanel();
 		panel.add(panel_1);
 		panel_1.setLayout(new FlowLayout(FlowLayout.LEFT, 5, 5));
+		File arquivo = new File("C:\\Chat\\Files\\conta.txt");
+		JProgressBar progressBar = new JProgressBar();
+		panel_1.add(progressBar);
+		JButton abrir = new JButton("Abrir");
+		panel_1.add(abrir);
 		
-		JLabel lblNewLabel = new JLabel("New label");
-		panel_1.add(lblNewLabel);
+		
+		
 		
 		
 		

@@ -20,35 +20,41 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
 import java.io.File;
+import java.io.IOException;
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.util.StringTokenizer;
 
 public class Janela_Chat extends JFrame {
-	private JScrollPane panelLeft;
 	private JPanel panelRight; 
+	private JPanel pChatRecebe;
+	private JScrollPane panelLeft;
 	private JScrollPane scrollPainel;
 	private JScrollPane scrollPainel2;
-	private JPanel pChatRecebe;
+	private JTextField textArquivo;
+	private JTextField txtNomeGrupoAdd;
 	private JTextArea areaTextSend;
-	private JButton btnEnviar;
-	private JMenu menuGrupo;
-	private DefaultListModel<InfoChat> chat = new DefaultListModel<InfoChat>();
-	private JList<InfoChat> listChat;
-	private Cliente client;
 	private JDialog dgrupo_add;
 	private JDialog dgrupo_criar;
 	private JDialog darquivo_enviar;
-	private JTextField textArquivo;
+	private JButton btnEnviar;
+	private JMenu menuGrupo;
+	private DefaultListModel<InfoChat> chat = new DefaultListModel<InfoChat>();
 	private DefaultListModel<String> clienteAll = new DefaultListModel<String>();
 	private DefaultListModel<String> clienteGrupo = new DefaultListModel<String>();
 	private DefaultListCellRenderer jlistIcon;
-	private int indexGrupo = 0;
-	private JTextField txtNomeGrupoAdd;
+	private JList<InfoChat> listChat;
+	private Cliente client;
 	private Telegraph grupoAdd;
 	private TelegraphQueue  queue = new TelegraphQueue ();
-	private JProgressBar percentFile;
+	private ImageIcon iconAnexo = new ImageIcon("img\\icon-anexo.png");
+	private ImageIcon iconEmoticon = new ImageIcon("img\\icon-emoticon.png");
+	private ImageIcon iconOn = new ImageIcon("img\\icon-on.png");
+	private ImageIcon iconSendFile = new ImageIcon(Janela_Chat.class.getResource("/org/jb2011/lnf/beautyeye/ch16_tree/imgs/treeDefaultOpen1.png"));
+	private ImageIcon iconLoading;
+	private final String pathDownload = "C:\\Chat\\Files\\";
+	private int indexGrupo = 0;
 
 	public Janela_Chat(Cliente client) {
 		this.client = client;
@@ -56,6 +62,11 @@ public class Janela_Chat extends JFrame {
 		Thread tclient = new Thread(this.client);
 		tclient.start();
 		ini_CompGraficos();
+		try {
+			iconLoading = new ImageIcon(new URL("file:///C:/Users/Lucas/Documents/eclipse/Chat_Rede/img/icon-loading.gif"));
+		} catch (MalformedURLException e) {
+			JOptionPane.showMessageDialog(null, e, "Erro", JOptionPane.ERROR_MESSAGE);
+		}
 	}
 	public void addLabelClientON(String nome, String ip){
 		chat.addElement(new InfoChat(nome, ip,0));
@@ -87,7 +98,6 @@ public class Janela_Chat extends JFrame {
 		}
 	}
 	public void incluirMsg(String chatNome,String emitente, String msg){
-		//for(ListaChat temp : chat){
 		for(int x=0;chat.size() > x;x++){
 			if(chat.get(x).getNome().equals(chatNome)){
 				InfoChat chatTemp = chat.get(x);
@@ -101,19 +111,25 @@ public class Janela_Chat extends JFrame {
 			}
 		}
 	}
-	public JProgressBar getProgressBar(){
-		return listChat.getSelectedValue().progressBar;
-	}
-	public void incluirFile(String chatNome, String nomeFile){
+	public void incluirFile(String chatNome, String nomeFile, String tamanhoFile){
 		for(int x=0;chat.size() > x;x++){
 			if(chat.get(x).getNome().equals(chatNome)){
 				InfoChat chatTemp = chat.get(x);
-				chatTemp.addFileToChat(nomeFile,chatNome,"recebendo");
-				chatTemp.buttonFile.addMouseListener(new MouseAdapter() {
+				String path = pathDownload + nomeFile;
+				chatTemp.addFileToChat(path,chatNome,"recebendo",tamanhoFile);
+				int index = (chatTemp.arquivos.size() -1);
+				chatTemp.arquivos.get(index).button.addActionListener(new ActionListener() {
 					@Override
-				    public void mouseClicked(MouseEvent e) {
-						client.startConexao_file("receber", chatNome, nomeFile);
-						chatTemp.buttonFile.setEnabled(false);
+					public void actionPerformed(ActionEvent  e) {
+						File pathCheck = new File(pathDownload);
+						if(!pathCheck.exists() && !pathCheck.mkdir()){
+							showNotfication("Falha","Não foi possível criar o diretório: "+pathDownload);
+						}else{
+							chatTemp.arquivos.get(index).button.removeActionListener(this);
+							chatTemp.arquivos.get(index).button.setToolTipText("Baixando...");
+							chatTemp.arquivos.get(index).button.setIcon(iconLoading);
+							client.startConexao_file("receber", chatNome, chatTemp.arquivos.get(index));
+						}
 					}
 				});
 				scrollPainel2.revalidate();
@@ -140,7 +156,7 @@ public class Janela_Chat extends JFrame {
 		}
 	}
 	public void showNotfication(String titulo, String msg){
-		grupoAdd = new Telegraph(titulo, msg, TelegraphType.NOTIFICATION_ADD, WindowPosition.BOTTOMRIGHT, 5000);
+		grupoAdd = new Telegraph(titulo, msg, TelegraphType.NOTIFICATION_ADD, WindowPosition.BOTTOMRIGHT, 3000);
 		queue.add(grupoAdd);
 	}
 	
@@ -178,7 +194,7 @@ public class Janela_Chat extends JFrame {
 		panelAtalho.setLayout(new FlowLayout(FlowLayout.LEFT, 15, 5));
 		panelRight.add(panelAtalho);
 		JButton labelAnexo = new JButton();
-		labelAnexo.setIcon(new ImageIcon("img\\icon-anexo.png"));
+		labelAnexo.setIcon(iconAnexo);
 		labelAnexo.setPreferredSize(new Dimension(22,22));
 		labelAnexo.addActionListener(new ActionListener() {
 		@Override
@@ -186,11 +202,13 @@ public class Janela_Chat extends JFrame {
 			if(!listChat.isSelectionEmpty()){
 				InfoChat destino = listChat.getSelectedValue();
 				if(destino.tipo == 0){
-					String localFile = GetPath();
+					String localFile = getPath();
 					if(localFile != null){
-						File arquivo = new File(localFile);
-						destino.addFileToChat(arquivo.getName(), "Eu", "enviando");
-						client.startConexao_file("enviar", destino.getNome(), localFile);
+						destino.addFileToChat(localFile, "Eu", "enviando", "0");
+						destino.arquivos.get(destino.arquivos.size()-1).button.setIcon(iconLoading);
+						client.startConexao_file("enviar", destino.getNome(), destino.arquivos.get(destino.arquivos.size()-1));
+						scrollPainel2.revalidate();
+						ajustaScroll();
 					}
 				}else
 					showNotfication("Alerta","Não é possivel enviar arquivo para um grupo.");
@@ -201,7 +219,7 @@ public class Janela_Chat extends JFrame {
 		});
 		panelAtalho.add(labelAnexo);
 		JButton labelEmoticon = new JButton();
-		labelEmoticon.setIcon(new ImageIcon("img\\icon-emoticon.png"));
+		labelEmoticon.setIcon(iconEmoticon);
 		labelEmoticon.setPreferredSize(new Dimension(22,22));
 		panelAtalho.add(labelEmoticon);
 		
@@ -418,7 +436,7 @@ public class Janela_Chat extends JFrame {
 	        	  	super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
 	        	  	if (value instanceof String) {
 		        	  	setText((String)value);
-		        	  	setIcon(new ImageIcon("img\\icon-on.png")); 
+		        	  	setIcon(iconOn); 
 	        	  	}
 	          	return this;
 	          }
@@ -452,7 +470,7 @@ public class Janela_Chat extends JFrame {
 		textArquivo.setColumns(30);
 		
 		JButton btnSelArquivo = new JButton();
-		btnSelArquivo.setIcon(new ImageIcon(Janela_Chat.class.getResource("/org/jb2011/lnf/beautyeye/ch16_tree/imgs/treeDefaultOpen1.png")));
+		btnSelArquivo.setIcon(iconSendFile);
 		btnSelArquivo.setPreferredSize(new Dimension(20,20));
 		springLayout.putConstraint(SpringLayout.NORTH, btnSelArquivo, 0, SpringLayout.NORTH, textArquivo);
 		springLayout.putConstraint(SpringLayout.WEST, btnSelArquivo, 6, SpringLayout.EAST, textArquivo);
@@ -460,7 +478,7 @@ public class Janela_Chat extends JFrame {
 		
 		btnSelArquivo.addActionListener(new ActionListener(){
 			public void actionPerformed(ActionEvent e) {
-				 String arquivo = GetPath();
+				 String arquivo = getPath();
 				 if(arquivo != null){
 					 textArquivo.setText(arquivo);
 				 }
@@ -474,11 +492,18 @@ public class Janela_Chat extends JFrame {
 
 		btnEnviarArq.addActionListener(new ActionListener(){
 			public void actionPerformed(ActionEvent e) {
-				if(textArquivo.getText() != null){
-					File arquivo = new File(textArquivo.getText());
-					listChat.getSelectedValue().addFileToChat(arquivo.getName(), "Eu", "enviando");
-					client.startConexao_file("enviar", listChat.getSelectedValue().getNome(), textArquivo.getText());
-					darquivo_enviar.setVisible(false);
+				if(!textArquivo.getText().trim().equals("")){
+					if(new File(textArquivo.getText()).exists()){
+						InfoChat destino = listChat.getSelectedValue();
+						destino.addFileToChat(textArquivo.getText(), "Eu", "enviando", "0");
+						destino.arquivos.get(destino.arquivos.size()-1).button.setIcon(iconLoading);
+						client.startConexao_file("enviar", destino.getNome(), destino.arquivos.get(destino.arquivos.size()-1));
+						darquivo_enviar.setVisible(false);
+						scrollPainel2.revalidate();
+						ajustaScroll();
+					}else{
+						showNotfication("Arquivo Inválido", "O arquivo selecionado não existe!");
+					}
 				}
 			}
 		});
@@ -513,10 +538,10 @@ public class Janela_Chat extends JFrame {
 		scrollList.setBorder(new TitledBorder(new LineBorder(null), "Usuários"));
 		panelBg.add(scrollList);
 		scrollList.setPreferredSize(new Dimension(170,170));
-		JList<String> listChat = new JList<String>(clienteGrupo);
-		listChat.setCellRenderer(jlistIcon);
-		listChat.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-		scrollList.setViewportView(listChat);
+		JList<String> listChatAddUser = new JList<String>(clienteGrupo);
+		listChatAddUser.setCellRenderer(jlistIcon);
+		listChatAddUser.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+		scrollList.setViewportView(listChatAddUser);
 		
 		JButton btnAdicionar = new JButton("Adicionar");
 		springLayout.putConstraint(SpringLayout.SOUTH, btnAdicionar, -10, SpringLayout.SOUTH, panelBg);
@@ -525,10 +550,10 @@ public class Janela_Chat extends JFrame {
 		
 		btnAdicionar.addActionListener(new ActionListener(){
 			public void actionPerformed(ActionEvent e) {
-				if(listChat.isSelectionEmpty())
+				if(listChatAddUser.isSelectionEmpty())
 					JOptionPane.showMessageDialog(null, "Selecione o usuário que deseja adicionar ao grupo", "Alerta", JOptionPane.WARNING_MESSAGE);
 				else{
-					client.enviar("ADD_USER_GRUPO", txtNomeGrupoAdd.getText(), listChat.getSelectedValue());
+					client.enviar("ADD_USER_GRUPO", txtNomeGrupoAdd.getText(), listChatAddUser.getSelectedValue());
 					dgrupo_add.setVisible(false);
 				}
 			}
@@ -626,8 +651,9 @@ public class Janela_Chat extends JFrame {
 		});
 	}
 	
-	public String GetPath(){
+	public String getPath(){
 		JFileChooser fc = new JFileChooser(); 
+		fc.setBackground(Color.WHITE);
 		fc.setAcceptAllFileFilterUsed(true);
         int res = fc.showOpenDialog(null);
         if(res == JFileChooser.APPROVE_OPTION){
