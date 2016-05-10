@@ -8,6 +8,6 @@
 	<classpathentry kind="lib" path="lib/timingframework-classic-1.1.jar"/>
 	<classpathentry kind="lib" path="lib/JTelegraph-1.0.jar"/>
 	<classpathentry kind="lib" path="lib/JTattoo-1.6.11.jar"/>
-	<classpathentry kind="lib" path="/ChatApp/forms-1.3.0.jar" sourcepath="/ChatApp/forms-1.3.0-src.zip"/>
+	<classpathentry kind="lib" path="lib/weblaf-complete-1.29.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

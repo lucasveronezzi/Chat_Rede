@@ -25,7 +25,7 @@ public class ArquivoSocket extends Thread{
 	private String meuNome;
 	private Arquivo obArquivo;
 	private BufferedInputStream buffArquivo;
-	private ImageIcon iconOpenFile = new ImageIcon("img\\icon-open-file.png");
+	private ImageIcon iconOpenFile = new ImageIcon("C:\\Chat\\img\\icon-open-file.png");
 	public ArquivoSocket(String ip, int porta, String tipo, String usuario, String meuNome,Arquivo file ){
 		try {
 			socketFile = new Socket(ip, porta);

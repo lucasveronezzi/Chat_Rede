@@ -21,7 +21,6 @@ import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 import java.io.File;
-import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.StringTokenizer;
@@ -48,9 +47,9 @@ public class Janela_Chat extends JFrame {
 	private Cliente client;
 	private Telegraph grupoAdd;
 	private TelegraphQueue  queue = new TelegraphQueue ();
-	private ImageIcon iconAnexo = new ImageIcon("img\\icon-anexo.png");
-	private ImageIcon iconEmoticon = new ImageIcon("img\\icon-emoticon.png");
-	private ImageIcon iconOn = new ImageIcon("img\\icon-on.png");
+	private ImageIcon iconAnexo = new ImageIcon("C:\\Chat\\img\\icon-anexo.png");
+	private ImageIcon iconEmoticon = new ImageIcon("C:\\Chat\\img\\icon-emoticon.png");
+	private ImageIcon iconOn = new ImageIcon("C:\\Chat\\img\\icon-on.png");
 	private ImageIcon iconSendFile = new ImageIcon(Janela_Chat.class.getResource("/org/jb2011/lnf/beautyeye/ch16_tree/imgs/treeDefaultOpen1.png"));
 	private ImageIcon iconLoading;
 	private final String pathDownload = "C:\\Chat\\Files\\";
@@ -235,19 +234,25 @@ public class Janela_Chat extends JFrame {
 		
 		areaTextSend.addKeyListener(new KeyListener(){
 		    @Override
-		    public void keyPressed(KeyEvent e){
-		    	if(e.getKeyCode() == KeyEvent.VK_ENTER){
-		    		e.consume();
-		    		System.out.println("teste");
-		    		btnEnviar.doClick();
-		    	 }
-		    }
-		    @Override
 		    public void keyTyped(KeyEvent e) {
 		    }
 		    @Override
 		    public void keyReleased(KeyEvent e) {
+		    	if (e.isShiftDown()) {  
+		    		if (e.getKeyCode() == KeyEvent.VK_ENTER) {
+		    			areaTextSend.setText(areaTextSend.getText()+"\n");
+		    		}	
+		    	}
 		    }
+			@Override
+			public void keyPressed(KeyEvent e) {
+				if(!e.isShiftDown()){
+					if (e.getKeyCode() == KeyEvent.VK_ENTER) {
+				    	e.consume();
+			    		btnEnviar.doClick();
+					}
+				}
+			}
 		});
 		
 		scrollPainel = new JScrollPane(areaTextSend);
@@ -656,7 +661,7 @@ public class Janela_Chat extends JFrame {
 	}
 	
 	public String getPath(){
-		JFileChooser fc = new JFileChooser(); 
+		JFileChooser fc = new JFileChooser();
 		fc.setBackground(Color.WHITE);
 		fc.setAcceptAllFileFilterUsed(true);
         int res = fc.showOpenDialog(null);

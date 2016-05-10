@@ -13,38 +13,34 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map.Entry;
-
 import javax.swing.BoxLayout;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JProgressBar;
-import javax.swing.JScrollPane;
-import javax.swing.JTextArea;
 import javax.swing.JTextPane;
-import javax.swing.ScrollPaneConstants;
-import javax.swing.ScrollPaneLayout;
+
 
 public class InfoChat {
 	public String textToolTip = "Participantes: ";
 	public JLabel labMsgNLida = new JLabel();
 	public boolean msgNaoLida = false;
 	public ImageIcon icon;
-	public List<Arquivo> arquivos;
 	public int tipo;
+	public List<Arquivo> arquivos;
 	
 	private String nome;
 	private String ip;
 	private JPanel pChatRecebe;
 	private List<String> usuarios;
-	private Color clEmitente = new Color(239, 243, 255);
-	private Color clDestino =new Color(229, 247, 253);
+	private Color clEmitente = new Color(229, 240, 245);
+	private Color clDestino =new Color(213, 231, 255);
 	private Font FontHeader = new Font("Century Gothic", Font.BOLD, 12);
 	private Font fontFile = new Font("Century Gothic", Font.BOLD, 11);
 	private DateFormat dateFormat = new SimpleDateFormat("HH:mm");
-	private ImageIcon iconMsgNLIda = new ImageIcon("img\\chat.png");
-	private ImageIcon iconDownload = new ImageIcon("img\\icon-file.png");
+	private ImageIcon iconMsgNLIda = new ImageIcon("C:\\img\\chat.png");
+	private ImageIcon iconDownload = new ImageIcon("C:\\Chat\\img\\icon-file.png");
 	private int tmPanel = 0;
 	
 	public InfoChat(String nome, String ip, int tipo){
@@ -109,7 +105,7 @@ public class InfoChat {
 		labelMsg.setContentType("text/html");
 		labelMsg.setMargin(new Insets(5,10,5,15));
 		msg = replaceEmoticon(msg);
-		msg = "<p style=\"font-size: 11px;width: 255px; word-wrap: break-word;margin:0px\">"+msg+"</p>";
+		msg = "<p style=\"font-size: 11px;width: 255px; word-wrap: break-word;margin:0px\">"+msg.replace("\n", "<br>")+"</p>";
 		labelMsg.setText(msg);
 		
 		if(emitente.equals("Eu"))
@@ -207,8 +203,14 @@ public class InfoChat {
 	 }
 	 public String replaceEmoticon(String msg){
 		 HashMap<String, String> smileys = new HashMap<String, String>();
-		 smileys.put(":\\)","<div style=\"background: url(file:C:/Chat/img/icon-emoticon.png); width:20px;height:20px;\"></div>");
-		 
+		 String emoPath = "<img src=\"file:C:/Chat/img/emoticon/";
+		 smileys.put(":\\)",emoPath+"e6.png\" >");
+		 smileys.put(":\\(",emoPath+"e7.png\" >");
+		 smileys.put(">.<",emoPath+"e3.png\" >");
+		 smileys.put(":D",emoPath+"e4.png\" >");
+		 smileys.put(":R",emoPath+"e2.png\" >");
+		 smileys.put(":L",emoPath+"e1.png\" >");
+		 smileys.put(":O",emoPath+"e5.png\" >");
 		 for(Entry<String, String> smiley : smileys.entrySet())
 			 msg = msg.replaceAll(smiley.getKey(), smiley.getValue());
 		 return msg;
