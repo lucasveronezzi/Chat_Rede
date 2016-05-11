@@ -1,5 +1,4 @@
 package Painel;
-
 import java.io.ByteArrayOutputStream;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
@@ -14,7 +13,6 @@ import java.util.Date;
 import java.util.List;
 import java.util.StringTokenizer;
 import javax.swing.JOptionPane;
-import javax.swing.ProgressMonitorInputStream;
 
 public class Servidor implements Runnable{
 	private ServerSocket servidor;
@@ -70,22 +68,41 @@ public class Servidor implements Runnable{
 			if(grupo.get(0).clientes.contains(nome)){
 				if(opt.equals("CON_FILE_REQUEST")){
 					String destino = splitMsg.nextToken("|");
+					String tipoDestino = splitMsg.nextToken("|");
 					String arquivoNome = splitMsg.nextToken("|");
 					String arquivoTamanho = splitMsg.nextToken("|");
-					arquivos.add(new Arquivo(destino, nome, arquivoNome, arquivoTamanho));
+					arquivos.add(new Arquivo(destino,tipoDestino, nome, arquivoNome, arquivoTamanho));
 					return "ARQUIVO";
 				}else 
 					if(opt.equals("CON_FILE_ACCEPT")){
 						String emitente = splitMsg.nextToken("|");
 						String nomeFile = splitMsg.nextToken("|");
 						for(int x=0;arquivos.size() >x;x++){
+							System.out.println("Emitente "+arquivos.get(x).emitente);
 							if(arquivos.get(x).emitente.equals(emitente) && arquivos.get(x).nomeArquivo.equals(nomeFile)){
-								arquivos.get(x).socketDestino = socketValidar;
-								arquivos.get(x).enviarFile();
+								System.out.println("Emitente2 "+arquivos.get(x).emitente);
+								arquivos.get(x).enviarFile(socketValidar);
 								break;
 							}
 						}
 						return "ACCEPT_FILE";
+					}
+					if(opt.equals("CON_FILE_ACCEPT_GRUPO")){
+						String chatNome = splitMsg.nextToken("|");
+						String emitente = splitMsg.nextToken("|");
+						String nomeFile = splitMsg.nextToken("|");
+						for(int x=0;arquivos.size() >x;x++){
+							Arquivo arqT = arquivos.get(x);
+							System.out.println("Destino "+arqT.destino);
+							System.out.println("Emitente "+arqT.emitente);
+							if(arqT.emitente.equals(emitente) && arqT.nomeArquivo.equals(nomeFile) && arqT.destino.equals(chatNome)){
+								System.out.println("Destino2 "+arqT.destino);
+								System.out.println("Emitente2 "+arqT.emitente);
+								arqT.enviarFile(socketValidar);
+								return "ACCEPT_FILE";
+							}
+						}
+						return "RECUSADO";
 					}
 				saida.writeUTF("RECUSADO");
 			 	terminal.addMsgTerminal("[Servidor]:Cliente("+socketValidar.getInetAddress().getHostAddress()+") recusado, nome "+nome+" já existe\n");
@@ -109,6 +126,7 @@ public class Servidor implements Runnable{
 			 if(client.get(x).nome.equals(nome)){
 				 Cliente temp = client.get(x);
 				 try{
+					delete_arquivo(temp.nome);
 					grupo.get(0).removeCliente(nome);;
 					client.remove(x);    
 					temp.entrada.close();
@@ -336,13 +354,20 @@ public class Servidor implements Runnable{
 		 }
 	 }
 	 
+	 public void delete_arquivo(String emitente){
+			for(int x=0;arquivos.size() > x;x++){
+				if(arquivos.get(x).emitente.equals(emitente)){
+					arquivos.remove(x);
+				}
+			}
+		 }
+	 
 	 public void finalizar_arquivo(Socket sk ){
 		for(int x=0;arquivos.size() > x;x++){
 			if(arquivos.get(x).socket.equals(sk)){
-				Arquivo temp = arquivos.get(x);
 				try {
+					sk.close();
 					arquivos.remove(x);
-					temp.socketDestino.close();
 				} catch (IOException e) {
 					terminal.addErroTerminal("[ERRO]: "+e.getMessage());
 				}
@@ -352,15 +377,16 @@ public class Servidor implements Runnable{
 
 	 class Arquivo extends Thread{
 		 private String destino;
+		 private String tipoDestino;
 		 private String emitente;
 		 private String nomeArquivo;
 		 private int tamanho;
 		 private Socket socket;
-		 private Socket socketDestino;
 		 private ByteArrayOutputStream arquivoTemp;
 		 
-		 public Arquivo(String destino, String emitente, String nomeArquivo, String tamanho){
+		 public Arquivo(String destino,String tipoDestino,String emitente, String nomeArquivo, String tamanho){
 			 this.destino = destino;
+			 this.tipoDestino = tipoDestino;
 			 this.emitente = emitente;
 			 this.nomeArquivo = nomeArquivo;
 			 this.tamanho = Integer.parseInt(tamanho);
@@ -376,26 +402,43 @@ public class Servidor implements Runnable{
 	                byte[] bytArquivo = new byte[1000];
 	                arquivoTemp = new ByteArrayOutputStream();
 	                int tmByt;
-	                System.out.println("recebendo arquivo");
 	                while((tmByt = entradaArquivo.read(bytArquivo)) > 0){
 	                	 arquivoTemp.write(bytArquivo, 0, tmByt);
 	                }
 	                socket.close();
-	                for(int x=0; client.size() > x;x++){
-	   				 if(client.get(x).nome.equals(emitente))
-	   					 client.get(x).redirecionarMSG(destino,"CON_FILE_SEND|"+emitente+"|"+nomeArquivo+"|"+tamanho);
+	                if(tipoDestino.equals("0")){
+		                for(int x=0; client.size() > x;x++){
+		   				 if(client.get(x).nome.equals(emitente))
+		   					 client.get(x).redirecionarMSG(destino,"CON_FILE_SEND|"+emitente+"|"+nomeArquivo+"|"+tamanho);
+		                }
+	                }else if(tipoDestino.equals("1")){
+	                	for(Grupo grupoT : grupo){
+				 			if(grupoT.nome.equals(destino)){
+				 				for(int x=0;grupoT.clientes.size() > x;x++){
+				 					String destinoT = grupoT.getCliente(x);
+				 					if(!destinoT.equals(this.emitente)){
+					 					String msgEnviar = "CON_FILE_SEND_GRUPO|"+emitente+"|"+destino+"|"+nomeArquivo+"|"+tamanho;
+					 					client.get(x).redirecionarMSG(destinoT,msgEnviar);
+				 					}
+				 				}
+				 			}
+				 		}
 	                }
 				}catch(IOException e) {
 					finalizar_arquivo(socket);
 					terminal.addErroTerminal("[ERRO]: "+e.getMessage());
 				}
 		 }
-		 public void enviarFile(){
+		 public void enviarFile(Socket socket){
 			 try {
+				Socket socketDestino = socket;
+				System.out.println("teste");
 				OutputStream saidaArquivo = socketDestino.getOutputStream();
-				System.out.println("Enviar arquivo");
 				arquivoTemp.writeTo(saidaArquivo);
-				finalizar_arquivo(socket);
+				if(tipoDestino.equals("0"))
+					finalizar_arquivo(socket);
+				else
+					socket.close();
 			 } catch (IOException e) {
 				 finalizar_arquivo(socket);
 				 terminal.addErroTerminal("[ERRO]: "+e.getMessage());

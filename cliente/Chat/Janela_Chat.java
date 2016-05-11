@@ -1,12 +1,10 @@
 package Chat;
 
 import javax.swing.*;
-import javax.swing.border.LineBorder;
-import javax.swing.border.TitledBorder;
-import javax.swing.event.DocumentEvent;
-import javax.swing.event.DocumentListener;
-import javax.swing.event.ListSelectionEvent;
-import javax.swing.event.ListSelectionListener;
+import javax.swing.border.*;
+import javax.swing.event.*;
+import javax.swing.table.DefaultTableCellRenderer;
+import javax.swing.table.DefaultTableModel;
 import net.sf.jcarrierpigeon.WindowPosition;
 import net.sf.jtelegraph.Telegraph;
 import net.sf.jtelegraph.TelegraphQueue;
@@ -16,18 +14,17 @@ import java.awt.Color;
 import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.awt.event.KeyEvent;
-import java.awt.event.KeyListener;
+import java.awt.Font;
+import java.awt.Point;
+import java.awt.event.*;
 import java.io.File;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.StringTokenizer;
 
 public class Janela_Chat extends JFrame {
-	private JPanel panelRight; 
 	private JPanel pChatRecebe;
+	private JLayeredPane panelRight; 
 	private JScrollPane panelLeft;
 	private JScrollPane scrollPainel;
 	private JScrollPane scrollPainel2;
@@ -54,6 +51,8 @@ public class Janela_Chat extends JFrame {
 	private ImageIcon iconLoading;
 	private final String pathDownload = "C:\\Chat\\Files\\";
 	private int indexGrupo = 0;
+	private TitledBorder tituloChat;
+	private JScrollPane scrollEmoticon;
 
 	public Janela_Chat(Cliente client) {
 		this.client = client;
@@ -93,6 +92,8 @@ public class Janela_Chat extends JFrame {
 					pChatRecebe = listChat.getSelectedValue().getPanelChat();
 					chat.get(listChat.getSelectedIndex()).msgNaoLida = false;
 					scrollPainel2.setViewportView(pChatRecebe);
+					tituloChat.setTitle(listChat.getSelectedValue().getNome());
+					scrollPainel2.repaint();
 				}
 				break;
 			}
@@ -112,12 +113,12 @@ public class Janela_Chat extends JFrame {
 			}
 		}
 	}
-	public void incluirFile(String chatNome, String nomeFile, String tamanhoFile){
+	public void incluirFile(String emitente, String chatNome,String nomeFile, String tamanhoFile){
 		for(int x=0;chat.size() > x;x++){
 			if(chat.get(x).getNome().equals(chatNome)){
 				InfoChat chatTemp = chat.get(x);
 				String path = pathDownload + nomeFile;
-				chatTemp.addFileToChat(path,chatNome,"recebendo",tamanhoFile);
+				chatTemp.addFileToChat(path,emitente,"recebendo",tamanhoFile);
 				int index = (chatTemp.arquivos.size() -1);
 				chatTemp.arquivos.get(index).button.addActionListener(new ActionListener() {
 					@Override
@@ -129,7 +130,7 @@ public class Janela_Chat extends JFrame {
 							chatTemp.arquivos.get(index).button.removeActionListener(this);
 							chatTemp.arquivos.get(index).button.setToolTipText("Baixando...");
 							chatTemp.arquivos.get(index).button.setIcon(iconLoading);
-							client.startConexao_file("receber", chatNome, chatTemp.arquivos.get(index));
+							client.startConexao_file("receber",  emitente, chatNome, chatTemp.arquivos.get(index), chatTemp.tipo);
 						}
 					}
 				});
@@ -165,7 +166,7 @@ public class Janela_Chat extends JFrame {
 		setTitle("Conectado | Usuario: " + client.nome);
 		getContentPane().setLayout(new BoxLayout(getContentPane(), BoxLayout.X_AXIS));
 		setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
-		setBounds(400, 100, 700, 500);
+		setBounds(400, 100, 800, 670);
 		setVisible(true);
 		setLocationRelativeTo(null);
 		setResizable(false);
@@ -176,24 +177,41 @@ public class Janela_Chat extends JFrame {
 		
 		panelLeft = new JScrollPane(listChat);
 		getContentPane().add(panelLeft);
-		panelLeft.setPreferredSize(new Dimension(100,500));
+		panelLeft.setPreferredSize(new Dimension(100,650));
 		panelLeft.setLayout(new ScrollPaneLayout());
 		
-		panelRight = new JPanel();
+		panelRight = new JLayeredPane();
 		getContentPane().add(panelRight);
-		panelRight.setBorder(new LineBorder(new Color(0, 0, 0)));
-		panelRight.setPreferredSize(new Dimension(270, 500));
-		panelRight.setLayout(new BoxLayout(panelRight, BoxLayout.Y_AXIS));
+		panelRight.setOpaque(true);
+		panelRight.setBackground(new Color(250,250,250));
+		panelRight.setPreferredSize(new Dimension(320, 650));
 		
+	    scrollEmoticon = new JScrollPane();
+	    scrollEmoticon.setBounds(52, 325, 150, 138);
+	    scrollEmoticon.setBackground(new Color(250,250,250));
+	    scrollEmoticon.setOpaque(true);
+	    scrollEmoticon.setVisible(false);
+		panelRight.add(scrollEmoticon, new Integer(5), 0);
+		try {
+			insertIcons();
+		} catch (MalformedURLException e1) {
+			e1.printStackTrace();
+		}
+
 		scrollPainel2 = new JScrollPane(pChatRecebe);
-		scrollPainel2.setPreferredSize(new Dimension(200,291));
+		tituloChat = new TitledBorder(new LineBorder(null));
+		tituloChat.setTitleFont( new Font("Century Gothic", Font.BOLD, 14));
+		scrollPainel2.setBorder(tituloChat);
+		scrollPainel2.getVerticalScrollBar().setUnitIncrement(20);
+		scrollPainel2.setBounds(0, 0, 480, 460);
 		scrollPainel2.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
-		panelRight.add(scrollPainel2);
+		panelRight.add(scrollPainel2,  new Integer(1), 0);
 		
 		JPanel panelAtalho = new JPanel();
-		panelAtalho.setPreferredSize(new Dimension(200,25));
+		panelAtalho.setBounds(0, 460, 485, 30);
 		panelAtalho.setLayout(new FlowLayout(FlowLayout.LEFT, 15, 5));
-		panelRight.add(panelAtalho);
+		panelRight.add(panelAtalho, new Integer(2), 0);
+		
 		JButton labelAnexo = new JButton();
 		labelAnexo.setIcon(iconAnexo);
 		labelAnexo.setPreferredSize(new Dimension(22,22));
@@ -207,7 +225,7 @@ public class Janela_Chat extends JFrame {
 					if(localFile != null){
 						destino.addFileToChat(localFile, "Eu", "enviando", "0");
 						destino.arquivos.get(destino.arquivos.size()-1).button.setIcon(iconLoading);
-						client.startConexao_file("enviar", destino.getNome(), destino.arquivos.get(destino.arquivos.size()-1));
+						client.startConexao_file("enviar", client.nome,destino.getNome(), destino.arquivos.get(destino.arquivos.size()-1), destino.tipo);
 						scrollPainel2.revalidate();
 						ajustaScroll();
 					}
@@ -223,11 +241,25 @@ public class Janela_Chat extends JFrame {
 		labelEmoticon.setIcon(iconEmoticon);
 		labelEmoticon.setPreferredSize(new Dimension(22,22));
 		panelAtalho.add(labelEmoticon);
+		labelEmoticon.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent  e) {
+				scrollEmoticon.setVisible(true);
+				scrollEmoticon.requestFocus();
+			}
+		});
+		scrollEmoticon.addFocusListener(new FocusAdapter() {
+		    @Override
+		    public void focusLost(FocusEvent arg0) {
+		    	scrollEmoticon.setVisible(false);
+		    }
+		});  
 		
 		JPanel panelBotton = new JPanel();
-		panelRight.add(panelBotton);
+		panelBotton.setBounds(0, 490, 485, 90);
+		panelRight.add(panelBotton,  new Integer(2), 0);
 		areaTextSend = new JTextArea();
-		areaTextSend.setColumns(28);
+		areaTextSend.setColumns(49);
 		areaTextSend.setRows(2);
 		areaTextSend.setLineWrap(true);
 		areaTextSend.setWrapStyleWord(true);
@@ -278,6 +310,7 @@ public class Janela_Chat extends JFrame {
 						areaTextSend.setText("");
 						chatSelect.addMsgToChat(msg, "Eu");
 						ajustaScroll();
+						areaTextSend.requestFocus();
 					}else
 						showNotfication("Alerta", "Selecione um chat para enviar sua mensagem.");
 				}
@@ -360,6 +393,8 @@ public class Janela_Chat extends JFrame {
 		                    pChatRecebe = listChat.getSelectedValue().getPanelChat();
 		    				chat.get(listChat.getSelectedIndex()).msgNaoLida = false;
 		    				scrollPainel2.setViewportView(pChatRecebe);
+		    				tituloChat.setTitle(listChat.getSelectedValue().getNome());
+							scrollPainel2.repaint();
 	                    }
 	                }
 			 }
@@ -371,7 +406,7 @@ public class Janela_Chat extends JFrame {
 		menuBar.add(menuArquivo);
 		JMenuItem a_opt1 = new JMenuItem(new AbstractAction("Enviar arquivo..") {
 			 public void actionPerformed(ActionEvent ae) {
-				 if(!listChat.isSelectionEmpty() && listChat.getSelectedValue().tipo == 0){
+				 if(!listChat.isSelectionEmpty()){
 					 textArquivo.setText("");
 					 darquivo_enviar.setVisible(true);
 				 }
@@ -397,7 +432,10 @@ public class Janela_Chat extends JFrame {
 						  pChatRecebe = listChat.getSelectedValue().getPanelChat();
 						  chat.get(listChat.getSelectedIndex()).msgNaoLida = false;
 						  scrollPainel2.setViewportView(pChatRecebe);
+						  tituloChat.setTitle(listChat.getSelectedValue().getNome());
+						  scrollPainel2.repaint();
 						  ajustaScroll();
+						  areaTextSend.requestFocus();
 					  }
 					  if(listChat.getSelectedValue().tipo == 1 && listChat.getSelectedIndex() > 0){
 						  g_opt3.setEnabled(true);
@@ -408,8 +446,7 @@ public class Janela_Chat extends JFrame {
 						  g_opt2.setEnabled(false);
 						  a_opt1.setEnabled(true);
 					  }
-					  if(listChat.getSelectedIndex() == 0)
-						  a_opt1.setEnabled(false);
+					  if(listChat.getSelectedIndex() == 0) a_opt1.setEnabled(false);
 				  }
 			  }
 		});
@@ -458,7 +495,7 @@ public class Janela_Chat extends JFrame {
 	public void menuEnviarArquivo(){
 		SpringLayout springLayout = new SpringLayout();
 		darquivo_enviar = new JDialog(this, "Enviar Arquivo",JDialog.ModalityType.DOCUMENT_MODAL);
-		darquivo_enviar.setBounds(450, 220, 500, 180);
+		darquivo_enviar.setBounds(450, 220, 415, 180);
 		darquivo_enviar.setResizable(false);
 
 		JPanel panelBg = new JPanel();
@@ -496,7 +533,7 @@ public class Janela_Chat extends JFrame {
 		
 		JButton btnEnviarArq = new JButton("Enviar Arquivo");
 		springLayout.putConstraint(SpringLayout.SOUTH, btnEnviarArq, -10, SpringLayout.SOUTH, panelBg);
-		springLayout.putConstraint(SpringLayout.EAST, btnEnviarArq, 275, SpringLayout.WEST, panelBg);
+		springLayout.putConstraint(SpringLayout.EAST, btnEnviarArq, 240, SpringLayout.WEST, panelBg);
 		panelBg.add(btnEnviarArq);
 
 		btnEnviarArq.addActionListener(new ActionListener(){
@@ -506,7 +543,7 @@ public class Janela_Chat extends JFrame {
 						InfoChat destino = listChat.getSelectedValue();
 						destino.addFileToChat(textArquivo.getText(), "Eu", "enviando", "0");
 						destino.arquivos.get(destino.arquivos.size()-1).button.setIcon(iconLoading);
-						client.startConexao_file("enviar", destino.getNome(), destino.arquivos.get(destino.arquivos.size()-1));
+						client.startConexao_file("enviar",client.nome, destino.getNome(), destino.arquivos.get(destino.arquivos.size()-1), destino.tipo);
 						darquivo_enviar.setVisible(false);
 						scrollPainel2.revalidate();
 						ajustaScroll();
@@ -664,6 +701,7 @@ public class Janela_Chat extends JFrame {
 		JFileChooser fc = new JFileChooser();
 		fc.setBackground(Color.WHITE);
 		fc.setAcceptAllFileFilterUsed(true);
+		fc.setDialogTitle("Selecione o Arquivo");
         int res = fc.showOpenDialog(null);
         if(res == JFileChooser.APPROVE_OPTION){
             return fc.getSelectedFile().getPath();
@@ -672,5 +710,83 @@ public class Janela_Chat extends JFrame {
 	}
 	public void ajustaScroll(){
 		scrollPainel2.getVerticalScrollBar().setValue(scrollPainel2.getVerticalScrollBar().getMaximum());
+	}
+	
+	public void insertIcons() throws MalformedURLException{
+		String e1 = "file:///C:/Chat/img/emoticon/e1.png";
+		String e2 = "file:///C:/Chat/img/emoticon/e2.png";
+		String e3 = "file:///C:/Chat/img/emoticon/e3.png";
+		String e4 = "file:///C:/Chat/img/emoticon/e4.png";
+		String e5 = "file:///C:/Chat/img/emoticon/e5.png";
+		String e6 = "file:///C:/Chat/img/emoticon/e6.png";
+		String e7 = "file:///C:/Chat/img/emoticon/e7.png";
+		String e8 = "file:///C:/Chat/img/emoticon/e8.png";
+		String e9 = "file:///C:/Chat/img/emoticon/e9.gif";
+		String e10 = "file:///C:/Chat/img/emoticon/e10.gif";
+		String e11 = "file:///C:/Chat/img/emoticon/e11.gif";
+		String e12 = "file:///C:/Chat/img/emoticon/e12.gif";
+		String e13 = "file:///C:/Chat/img/emoticon/e13.png";
+		String e14 = "file:///C:/Chat/img/emoticon/e14.png";
+		String e15 = "file:///C:/Chat/img/emoticon/e15.gif";
+		String e16 = "file:///C:/Chat/img/emoticon/e16.png";
+		String e17 = "file:///C:/Chat/img/emoticon/e17.png";
+		String e18 = "file:///C:/Chat/img/emoticon/e18.gif";
+		String e19 = "file:///C:/Chat/img/emoticon/e19.gif";
+		String e20 = "file:///C:/Chat/img/emoticon/e20.gif";
+		String e21 = "file:///C:/Chat/img/emoticon/e21.png";
+		String e22 = "file:///C:/Chat/img/emoticon/e22.png";
+		String e23 = "file:///C:/Chat/img/emoticon/e23.gif";
+		String e24 = "file:///C:/Chat/img/emoticon/e24.gif";
+		String e25 = "file:///C:/Chat/img/emoticon/e25.png";
+		Object[][]dataEmoticons ={
+			{e1,e2,e3,e4,e5},
+			{e6,e7,e8,e9,e10},
+			{e11,e12,e13,e14,e15},
+			{e16,e17,e18,e19,e20},
+			{e21,e22,e23,e24,e25}
+			};
+		Object[][]stringEmoticons = {
+			{":L",":R",">.<",":D",":O",},
+			{":)",":(","sniff","/sono","eq%"},
+			{"pirata","o.O","/medo","/raiva","/facepalm"},
+			{"emo16","emo17","emo18","emo19","emo20"},
+			{"emo21","emo22","emo23","emo24","emo25"}
+		};
+		Object[] colunName = new Object[5];
+		DefaultTableModel modelo = new DefaultTableModel(dataEmoticons, colunName);
+		JTable tableEmoticon = new JTable(modelo);
+		
+		tableEmoticon.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+		tableEmoticon.setCellSelectionEnabled(true);
+		tableEmoticon.setTableHeader(null);
+		tableEmoticon.setFillsViewportHeight(true);
+		scrollEmoticon.setViewportView(tableEmoticon);
+
+		tableEmoticon.addMouseListener(new MouseAdapter() {
+		    public void mousePressed(MouseEvent e) {
+		        JTable table =(JTable) e.getSource();
+		        Point ponto = e.getPoint();
+		        int row = table.rowAtPoint(ponto);
+		        int col = table.columnAtPoint(ponto);
+		        areaTextSend.setText(areaTextSend.getText()+" "+stringEmoticons[row][col]);
+		        areaTextSend.requestFocus();
+		    }
+		});
+		for(int x=0;x<5;x++){
+			tableEmoticon.getColumnModel().getColumn(x).setCellRenderer(new DefaultTableCellRenderer(){
+				JButton but = new JButton();
+				public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected,
+				    boolean hasFocus, int row, int column) {
+					ImageIcon icon;
+					try {
+						icon = new ImageIcon(new URL(value.toString()));
+						but.setIcon(icon);
+					} catch (MalformedURLException e) {
+						e.printStackTrace();
+					}
+				    return but;
+				  }
+			});
+		}
 	}
 }

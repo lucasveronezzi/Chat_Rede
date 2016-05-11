@@ -7,12 +7,14 @@ import javax.swing.*;
 
 public class Main extends JFrame{
 	public static Main frame;
+	private static JTextField textUser;
 	public static void main (String[] args){
 		try{
-			UIManager.setLookAndFeel("org.jb2011.lnf.beautyeye.BeautyEyeLookAndFeelCross");
+			UIManager.setLookAndFeel("org.jb2011.lnf.beautyeye.BeautyEyeLookAndFeelWin");
 			UIManager.put("RootPane.setupButtonVisible", false);
 			frame = new Main();
 			frame.setVisible(true);
+			textUser.requestFocus();
 		}catch(ClassNotFoundException | InstantiationException | IllegalAccessException
 				| UnsupportedLookAndFeelException e) {
 			JOptionPane.showMessageDialog(null, e, "Erro", JOptionPane.ERROR_MESSAGE);
@@ -32,7 +34,7 @@ public class Main extends JFrame{
 		textIP.setColumns(10);
 		JTextField textPorta = new JTextField("555");
 		textPorta.setColumns(10);
-		JTextField textUser = new JTextField();
+		textUser = new JTextField();
 		textUser.setColumns(10);
 		JButton conect = new JButton("Conectar");
 		textUser.addKeyListener(new KeyListener(){

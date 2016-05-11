@@ -56,6 +56,7 @@ public class Cliente implements Runnable{
 				String msg = "";
 				String emitente;
 				String nomeGrupo;
+				String nomeArquivo;
 				StringTokenizer splitMsg = new StringTokenizer(dados);
 				switch(splitMsg.nextToken("|")){
 				case "SINGLE_MSG"://ESTRUTURA [OPCAO] | [EMITENTE] | [MENSAGEM]
@@ -65,11 +66,6 @@ public class Cliente implements Runnable{
 					}
 					chatFrame.incluirMsg(emitente, emitente, msg);
 					break;
-				case "CON_FILE_SEND"://ESTRUTURA [OPCAO] | [EMITENTE] | [NOME DO ARQUIVO] | [TAMANHO DO ARQUIVO]
-					emitente = splitMsg.nextToken("|");
-					String nomeArquivo = splitMsg.nextToken("|");
-					chatFrame.incluirFile(emitente,nomeArquivo, splitMsg.nextToken("|"));
-					break;
 				case "GRUPO_MSG"://ESTRUTURA [OPCAO] | [NOME DO GRUPO] | [EMITENTE] | [MENSAGEM]
 					nomeGrupo = splitMsg.nextToken("|");
 					emitente = splitMsg.nextToken("|");
@@ -77,6 +73,17 @@ public class Cliente implements Runnable{
 						msg = msg + splitMsg.nextToken("|");
 					}
 					chatFrame.incluirMsg(nomeGrupo, emitente, msg);
+					break;
+				case "CON_FILE_SEND"://ESTRUTURA [OPCAO] | [EMITENTE] | [NOME DO ARQUIVO] | [TAMANHO DO ARQUIVO]
+					emitente = splitMsg.nextToken("|");
+					nomeArquivo = splitMsg.nextToken("|");
+					chatFrame.incluirFile(emitente,emitente,nomeArquivo, splitMsg.nextToken("|"));
+					break;
+				case "CON_FILE_SEND_GRUPO"://ESTRUTURA [OPCAO] | [EMITENTE] |[NOME DO GRUPO]| [NOME DO ARQUIVO] | [TAMANHO DO ARQUIVO]
+					emitente = splitMsg.nextToken("|");
+					nomeGrupo = splitMsg.nextToken("|");
+					nomeArquivo = splitMsg.nextToken("|");
+					chatFrame.incluirFile(emitente,nomeGrupo,nomeArquivo, splitMsg.nextToken("|"));
 					break;
 				case "CLIENTES_ON"://ESTRUTURA [OPCAO] | {(LOOP) [NOME] | [IP] }
 					while(splitMsg.hasMoreTokens()){
@@ -122,6 +129,7 @@ public class Cliente implements Runnable{
 						chatFrame.showNotfication("Usuário Recusado","Não foi possivel adicionar o usuário pois ele já está no grupo");
 					}
 					break;
+
 				default:// COMANDO NAO IDENTIFICADO
 					JOptionPane.showMessageDialog(null, "Não foi possivel processar o comando", "Falha", JOptionPane.WARNING_MESSAGE);
 					break;
@@ -145,8 +153,9 @@ public class Cliente implements Runnable{
 		    JOptionPane.showMessageDialog(null, e, "Erro", JOptionPane.ERROR_MESSAGE);
 		}
 	}	
-	public void startConexao_file(String tipo, String usuario, Arquivo file){
-		sockFile = new ArquivoSocket(ipServidor, porta, tipo, usuario, nome, file);
+	public void startConexao_file(String tipo, String emitente, String nomeChat, Arquivo file, int tipoChat){
+		sockFile = new ArquivoSocket(ipServidor, porta, tipo, nomeChat, nome, file, tipoChat);
+		if(tipoChat == 1) sockFile.setEmitente(emitente);
 		sockFile.start();
 	}
 	public void criarGrupo(String grupo, DefaultListModel<String> usuarios){

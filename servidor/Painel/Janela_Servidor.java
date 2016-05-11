@@ -1,6 +1,7 @@
 package Painel;
 
 import java.awt.BorderLayout;
+import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
@@ -112,5 +113,16 @@ public class Janela_Servidor extends JFrame {
 	public void ajustaScroll(){
 		panelCenter.getVerticalScrollBar().setValue(panelCenter.getVerticalScrollBar().getMaximum());
 		panelRight.getVerticalScrollBar().setValue(panelRight.getVerticalScrollBar().getMaximum());
+	}
+	public String getPath(){
+		JFileChooser fc = new JFileChooser();
+		fc.setBackground(Color.WHITE);
+		fc.setAcceptAllFileFilterUsed(true);
+		fc.setDialogTitle("Selecione o Arquivo");
+        int res = fc.showOpenDialog(null);
+        if(res == JFileChooser.APPROVE_OPTION){
+            return fc.getSelectedFile().getPath();
+         }
+        return null;
 	}
 }

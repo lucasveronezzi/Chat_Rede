@@ -3,6 +3,7 @@ import java.awt.Desktop;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.BufferedInputStream;
+import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -21,26 +22,32 @@ public class ArquivoSocket extends Thread{
 	private InputStream entradaStream;
 	private OutputStream saidaStream;
 	private String tipo;
-	private String usuario;
+	private String chatNome;
 	private String meuNome;
+	private String emitente;
 	private Arquivo obArquivo;
 	private BufferedInputStream buffArquivo;
+	private int tipoChat;
 	private ImageIcon iconOpenFile = new ImageIcon("C:\\Chat\\img\\icon-open-file.png");
-	public ArquivoSocket(String ip, int porta, String tipo, String usuario, String meuNome,Arquivo file ){
+	public ArquivoSocket(String ip, int porta, String tipo, String chatNome, String meuNome,Arquivo file, int tipoChat ){
 		try {
 			socketFile = new Socket(ip, porta);
 			saida = new DataOutputStream(socketFile.getOutputStream());
 			this.tipo = tipo;
-			this.usuario = usuario;
+			this.chatNome = chatNome;
 			this.meuNome = meuNome;
 			this.obArquivo = file;
+			this.tipoChat = tipoChat;
 		} catch (IOException e) {
 			JOptionPane.showMessageDialog(null, e, "Erro", JOptionPane.ERROR_MESSAGE);
 		}
 	}
+	public void setEmitente(String emitente){
+		this.emitente = emitente;
+	}
 	public void enviar(){
 		try {
-			saida.writeUTF("CON_FILE_REQUEST|"+meuNome+"|"+usuario+"|"+obArquivo.arquivo.getName()+"|"+obArquivo.arquivo.length());
+			saida.writeUTF("CON_FILE_REQUEST|"+meuNome+"|"+chatNome+"|"+tipoChat+"|"+obArquivo.arquivo.getName()+"|"+obArquivo.arquivo.length());
 			int tmPorcento = (int)Math.ceil(obArquivo.arquivo.length() / 100);
 			if(tmPorcento == 0) tmPorcento = 1;
 			buffArquivo = new BufferedInputStream(new FileInputStream(obArquivo.arquivo));
@@ -66,29 +73,32 @@ public class ArquivoSocket extends Thread{
 	}
 	public void receber(){
 		try{
-			saida.writeUTF("CON_FILE_ACCEPT|"+meuNome+"|"+usuario+"|"+obArquivo.arquivo.getName());
-			FileOutputStream fos = new FileOutputStream(obArquivo.arquivo.getAbsolutePath());
-			entradaStream = socketFile.getInputStream();
-			int tmPorcento = (int)Math.ceil(obArquivo.tamanho / 100);
-			if(tmPorcento == 0) tmPorcento = 1;
-			byte[] bytArquivo = new byte[1000];
-			int tmByt;
-			int tmLido = 0;
-            System.out.println("recebendo arquivo");
-            while((tmByt = entradaStream.read(bytArquivo)) > 0){
-            	tmLido = tmLido + tmByt;
-            	obArquivo.barraProgresso.setValue(tmLido/tmPorcento);
-	            fos.write(bytArquivo, 0, tmByt);
-            }
-            obArquivo.barraProgresso.setValue(100);
-            obArquivo.barraProgresso.setString("Concluido");
-            obArquivo.button.setIcon(iconOpenFile);
-            obArquivo.button.addActionListener(actionOpenFile);
-            obArquivo.button.setToolTipText("Abrir Arquivo");
-            fos.flush();
-            fos.close();
+			if(tipoChat == 0)
+				saida.writeUTF("CON_FILE_ACCEPT|"+meuNome+"|"+chatNome+"|"+obArquivo.arquivo.getName());
+			else if(tipoChat == 1)
+				saida.writeUTF("CON_FILE_ACCEPT_GRUPO|"+meuNome+"|"+chatNome+"|"+emitente+"|"+obArquivo.arquivo.getName());
+				FileOutputStream fos = new FileOutputStream(obArquivo.arquivo.getAbsolutePath());
+				entradaStream = socketFile.getInputStream();
+				int tmPorcento = (int)Math.ceil(obArquivo.tamanho / 100);
+				if(tmPorcento == 0) tmPorcento = 1;
+				byte[] bytArquivo = new byte[1000];
+				int tmByt;
+				int tmLido = 0;
+	            System.out.println("recebendo arquivo");
+	            while((tmByt = entradaStream.read(bytArquivo)) > 0){
+	            	tmLido = tmLido + tmByt;
+	            	obArquivo.barraProgresso.setValue(tmLido/tmPorcento);
+		            fos.write(bytArquivo, 0, tmByt);
+	            }
+	            obArquivo.barraProgresso.setValue(100);
+	            obArquivo.barraProgresso.setString("Concluido");
+	            obArquivo.button.setIcon(iconOpenFile);
+	            obArquivo.button.addActionListener(actionOpenFile);
+	            obArquivo.button.setToolTipText("Abrir Arquivo");
+	            fos.flush();
+	            fos.close();
 		} catch (IOException e) {
-			JOptionPane.showMessageDialog(null, e, "Erro", JOptionPane.ERROR_MESSAGE);
+			e.printStackTrace();
 		}
 	}
 	@Override
