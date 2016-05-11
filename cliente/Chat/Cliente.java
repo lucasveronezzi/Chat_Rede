@@ -129,7 +129,10 @@ public class Cliente implements Runnable{
 						chatFrame.showNotfication("Usuário Recusado","Não foi possivel adicionar o usuário pois ele já está no grupo");
 					}
 					break;
-
+				case "GRUPO_EXISTE":
+					nomeGrupo = splitMsg.nextToken("|");
+					chatFrame.showNotfication("Grupo já Existe", "Esse grupo já existe na rede: "+nomeGrupo);
+					break;
 				default:// COMANDO NAO IDENTIFICADO
 					JOptionPane.showMessageDialog(null, "Não foi possivel processar o comando", "Falha", JOptionPane.WARNING_MESSAGE);
 					break;

@@ -78,9 +78,7 @@ public class Servidor implements Runnable{
 						String emitente = splitMsg.nextToken("|");
 						String nomeFile = splitMsg.nextToken("|");
 						for(int x=0;arquivos.size() >x;x++){
-							System.out.println("Emitente "+arquivos.get(x).emitente);
 							if(arquivos.get(x).emitente.equals(emitente) && arquivos.get(x).nomeArquivo.equals(nomeFile)){
-								System.out.println("Emitente2 "+arquivos.get(x).emitente);
 								arquivos.get(x).enviarFile(socketValidar);
 								break;
 							}
@@ -93,11 +91,7 @@ public class Servidor implements Runnable{
 						String nomeFile = splitMsg.nextToken("|");
 						for(int x=0;arquivos.size() >x;x++){
 							Arquivo arqT = arquivos.get(x);
-							System.out.println("Destino "+arqT.destino);
-							System.out.println("Emitente "+arqT.emitente);
 							if(arqT.emitente.equals(emitente) && arqT.nomeArquivo.equals(nomeFile) && arqT.destino.equals(chatNome)){
-								System.out.println("Destino2 "+arqT.destino);
-								System.out.println("Emitente2 "+arqT.emitente);
 								arqT.enviarFile(socketValidar);
 								return "ACCEPT_FILE";
 							}
@@ -137,6 +131,11 @@ public class Servidor implements Runnable{
 				} catch (IOException e) {
 					terminal.addErroTerminal("[ERRO]: Erro ao remover o cliente:\n"+e.getMessage()+"\n");
 				}
+				 for(int i=0;arquivos.size() > i;i++){
+						if(arquivos.get(i).emitente.equals(nome)){
+							arquivos.remove(i);
+						}
+				 }
 			 }
 			try {
 				if(x<client.size())
@@ -215,24 +214,42 @@ public class Servidor implements Runnable{
 					 		break;
 					 	case "CRIAR_GRUPO"://ESTRUTURA [OPCAO] | [NOME DO GRUPO] | [LISTA DE USUARIOS]
 					 		grupoR = splitMsg.nextToken("|");
-					 		int x = grupo.size();
-					 		grupo.add(x,new Grupo(grupoR));
-					 		while(splitMsg.hasMoreTokens()){
-					 			String nomeClient = splitMsg.nextToken("|");
-					 			grupo.get(x).addCliente(nomeClient);
-					 			msg = msg+nomeClient+";";
+					 		boolean grupExiste = false;
+					 		for(int x=0;grupo.size() > x;x++){
+					 			if(grupo.get(x).nome.equals(grupoR)){
+					 				grupExiste = true;
+					 				break;
+					 			}
 					 		}
-					 		enviarGrupo(grupoR,grupo.get(x).clientes, msg);
-					 		terminal.addMsgTerminal("[Servidor]: Grupo'"+grupoR+"' adicionar com sucesso\n");
+					 		if(!grupExiste){
+						 		grupo.add(new Grupo(grupoR));
+						 		int index = grupo.size()-1;
+						 		while(splitMsg.hasMoreTokens()){
+						 			String nomeClient = splitMsg.nextToken("|");
+						 			grupo.get(index).addCliente(nomeClient);
+						 			msg = msg+nomeClient+";";
+						 		}
+						 		enviarGrupo(grupoR,grupo.get(index).clientes, msg);
+						 		terminal.addMsgTerminal("[Servidor]: Grupo'"+grupoR+"' adicionar com sucesso\n");
+					 		}else{
+					 			destino = splitMsg.nextToken("|");
+					 			redirecionarMSG(destino,"GRUPO_EXISTE|"+grupoR);
+					 		}
+					 		
 					 		break;
 					 	case "SAIR_GRUPO"://ESTRUTURA [OPCAO] |  [NOME DO GRUPO]
 					 		grupoR = splitMsg.nextToken("|");
-					 		for(Grupo grupoT : grupo){
+					 		for(int x=0;grupo.size()>x;x++){
+					 			Grupo grupoT = grupo.get(x);
 					 			if(grupoT.nome.equals(grupoR)){
 					 				grupoT.clientes.remove(nome);
-					 				for(int i=0;grupoT.clientes.size() > i;i++){
-					 					msgEnviar = "USER_SAIU_GRUPO|"+grupoT.nome+"|"+nome;
-					 					redirecionarMSG(grupoT.clientes.get(i),msgEnviar);
+					 				if(grupoT.clientes.size() == 0){
+					 					grupo.remove(x);
+					 				}else{
+						 				for(int i=0;grupoT.clientes.size() > i;i++){
+						 					msgEnviar = "USER_SAIU_GRUPO|"+grupoT.nome+"|"+nome;
+						 					redirecionarMSG(grupoT.clientes.get(i),msgEnviar);
+						 				}
 					 				}
 					 			}
 					 		}
@@ -362,11 +379,11 @@ public class Servidor implements Runnable{
 			}
 		 }
 	 
-	 public void finalizar_arquivo(Socket sk ){
+	 public void finalizar_arquivo(long id ){
 		for(int x=0;arquivos.size() > x;x++){
-			if(arquivos.get(x).socket.equals(sk)){
+			if(arquivos.get(x).getId() == id){
 				try {
-					sk.close();
+					arquivos.get(x).socketDestino.close();
 					arquivos.remove(x);
 				} catch (IOException e) {
 					terminal.addErroTerminal("[ERRO]: "+e.getMessage());
@@ -383,6 +400,7 @@ public class Servidor implements Runnable{
 		 private int tamanho;
 		 private Socket socket;
 		 private ByteArrayOutputStream arquivoTemp;
+		 private Socket socketDestino;
 		 
 		 public Arquivo(String destino,String tipoDestino,String emitente, String nomeArquivo, String tamanho){
 			 this.destino = destino;
@@ -406,6 +424,11 @@ public class Servidor implements Runnable{
 	                	 arquivoTemp.write(bytArquivo, 0, tmByt);
 	                }
 	                socket.close();
+	                int indexEmitente = 0;
+	                for(int y=0;client.size()>y;y++){
+	                	if(client.get(y).nome.equals(emitente))
+	                		indexEmitente = y;
+	                }
 	                if(tipoDestino.equals("0")){
 		                for(int x=0; client.size() > x;x++){
 		   				 if(client.get(x).nome.equals(emitente))
@@ -418,29 +441,28 @@ public class Servidor implements Runnable{
 				 					String destinoT = grupoT.getCliente(x);
 				 					if(!destinoT.equals(this.emitente)){
 					 					String msgEnviar = "CON_FILE_SEND_GRUPO|"+emitente+"|"+destino+"|"+nomeArquivo+"|"+tamanho;
-					 					client.get(x).redirecionarMSG(destinoT,msgEnviar);
+					 					client.get(indexEmitente).redirecionarMSG(destinoT,msgEnviar);
 				 					}
 				 				}
 				 			}
 				 		}
 	                }
 				}catch(IOException e) {
-					finalizar_arquivo(socket);
+					finalizar_arquivo(this.getId());
 					terminal.addErroTerminal("[ERRO]: "+e.getMessage());
 				}
 		 }
 		 public void enviarFile(Socket socket){
 			 try {
-				Socket socketDestino = socket;
-				System.out.println("teste");
+				socketDestino = socket;
 				OutputStream saidaArquivo = socketDestino.getOutputStream();
 				arquivoTemp.writeTo(saidaArquivo);
 				if(tipoDestino.equals("0"))
-					finalizar_arquivo(socket);
+					finalizar_arquivo(this.getId());
 				else
-					socket.close();
+					socketDestino.close();
 			 } catch (IOException e) {
-				 finalizar_arquivo(socket);
+				 finalizar_arquivo(this.getId());
 				 terminal.addErroTerminal("[ERRO]: "+e.getMessage());
 			}
 		 }

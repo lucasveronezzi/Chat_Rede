@@ -29,6 +29,7 @@ public class ArquivoSocket extends Thread{
 	private BufferedInputStream buffArquivo;
 	private int tipoChat;
 	private ImageIcon iconOpenFile = new ImageIcon("C:\\Chat\\img\\icon-open-file.png");
+	private ImageIcon iconXFile = new ImageIcon("C:\\Chat\\img\\icon-xFile.png");
 	public ArquivoSocket(String ip, int porta, String tipo, String chatNome, String meuNome,Arquivo file, int tipoChat ){
 		try {
 			socketFile = new Socket(ip, porta);
@@ -77,26 +78,35 @@ public class ArquivoSocket extends Thread{
 				saida.writeUTF("CON_FILE_ACCEPT|"+meuNome+"|"+chatNome+"|"+obArquivo.arquivo.getName());
 			else if(tipoChat == 1)
 				saida.writeUTF("CON_FILE_ACCEPT_GRUPO|"+meuNome+"|"+chatNome+"|"+emitente+"|"+obArquivo.arquivo.getName());
-				FileOutputStream fos = new FileOutputStream(obArquivo.arquivo.getAbsolutePath());
-				entradaStream = socketFile.getInputStream();
-				int tmPorcento = (int)Math.ceil(obArquivo.tamanho / 100);
-				if(tmPorcento == 0) tmPorcento = 1;
-				byte[] bytArquivo = new byte[1000];
-				int tmByt;
-				int tmLido = 0;
-	            System.out.println("recebendo arquivo");
-	            while((tmByt = entradaStream.read(bytArquivo)) > 0){
-	            	tmLido = tmLido + tmByt;
-	            	obArquivo.barraProgresso.setValue(tmLido/tmPorcento);
-		            fos.write(bytArquivo, 0, tmByt);
-	            }
-	            obArquivo.barraProgresso.setValue(100);
-	            obArquivo.barraProgresso.setString("Concluido");
-	            obArquivo.button.setIcon(iconOpenFile);
-	            obArquivo.button.addActionListener(actionOpenFile);
-	            obArquivo.button.setToolTipText("Abrir Arquivo");
-	            fos.flush();
-	            fos.close();
+				if(!socketFile.isClosed()){
+					FileOutputStream fos = new FileOutputStream(obArquivo.arquivo.getAbsolutePath());
+					entradaStream = socketFile.getInputStream();
+					int tmPorcento = (int)Math.ceil(obArquivo.tamanho / 100);
+					if(tmPorcento == 0) tmPorcento = 1;
+					byte[] bytArquivo = new byte[1000];
+					int tmByt;
+					int tmLido = 0;
+		            while((tmByt = entradaStream.read(bytArquivo)) > 0){
+		            	tmLido = tmLido + tmByt;
+		            	obArquivo.barraProgresso.setValue(tmLido/tmPorcento);
+			            fos.write(bytArquivo, 0, tmByt);
+		            }
+		            fos.flush();
+		            fos.close();
+		            if(tmLido > 0){
+			            obArquivo.barraProgresso.setValue(100);
+			            obArquivo.barraProgresso.setString("Concluido");
+			            obArquivo.button.setIcon(iconOpenFile);
+			            obArquivo.button.addActionListener(actionOpenFile);
+			            obArquivo.button.setToolTipText("Abrir Arquivo");
+		            }else{
+		            	obArquivo.arquivo.delete();
+		            	obArquivo.barraProgresso.setValue(0);
+				        obArquivo.barraProgresso.setString("Excluido");
+				        obArquivo.button.setIcon(iconXFile);
+				        obArquivo.button.setToolTipText("Arquivo excluido");
+		            }
+				}
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
@@ -113,7 +123,8 @@ public class ArquivoSocket extends Thread{
 		public void actionPerformed(ActionEvent arg0) {
 			Desktop desktop = Desktop.getDesktop();
 			try {
-				desktop.edit(obArquivo.arquivo);
+				if(obArquivo.arquivo.exists())
+					desktop.edit(obArquivo.arquivo);
 			} catch (IOException e) {
 				JOptionPane.showMessageDialog(null, e, "Erro", JOptionPane.ERROR_MESSAGE);
 			}

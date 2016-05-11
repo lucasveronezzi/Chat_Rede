@@ -220,7 +220,7 @@ public class Janela_Chat extends JFrame {
 		public void actionPerformed(ActionEvent  e) {
 			if(!listChat.isSelectionEmpty()){
 				InfoChat destino = listChat.getSelectedValue();
-				if(destino.tipo == 0){
+
 					String localFile = getPath();
 					if(localFile != null){
 						destino.addFileToChat(localFile, "Eu", "enviando", "0");
@@ -229,10 +229,7 @@ public class Janela_Chat extends JFrame {
 						scrollPainel2.revalidate();
 						ajustaScroll();
 					}
-				}else
-					showNotfication("Alerta","Não é possivel enviar arquivo para um grupo.");
-			}
-			else
+			}else
 				showNotfication("Alerta", "Selecione um chat para enviar um arquivo.");
 		}
 		});
@@ -413,7 +410,7 @@ public class Janela_Chat extends JFrame {
 			 }
 		});
 		menuArquivo.add(a_opt1);
-		a_opt1.setEnabled(false);
+		a_opt1.setEnabled(true);
 		
 		addWindowListener(new java.awt.event.WindowAdapter() {
             public void windowClosing(java.awt.event.WindowEvent evt) {
@@ -440,13 +437,13 @@ public class Janela_Chat extends JFrame {
 					  if(listChat.getSelectedValue().tipo == 1 && listChat.getSelectedIndex() > 0){
 						  g_opt3.setEnabled(true);
 						  g_opt2.setEnabled(true);
-						  a_opt1.setEnabled(false);
+						
 					  }else{
 						  g_opt3.setEnabled(false);
 						  g_opt2.setEnabled(false);
-						  a_opt1.setEnabled(true);
+						
 					  }
-					  if(listChat.getSelectedIndex() == 0) a_opt1.setEnabled(false);
+					 
 				  }
 			  }
 		});
@@ -687,7 +684,6 @@ public class Janela_Chat extends JFrame {
 			public void actionPerformed(ActionEvent e) {
 				if(!txtNomeGrupo.getText().isEmpty() && clienteGrupo.size() > 0){
 					client.criarGrupo(txtNomeGrupo.getText(), clienteGrupo);
-					showNotfication("Grupo Adicionado", "Você criou o grupo '"+txtNomeGrupo.getText()+"' com sucesso!");
 					dgrupo_criar.setVisible(false);
 					txtNomeGrupo.setText("");
 				}else{
