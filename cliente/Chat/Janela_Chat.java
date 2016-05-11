@@ -726,9 +726,9 @@ public class Janela_Chat extends JFrame {
 		String e15 = "file:///C:/Chat/img/emoticon/e15.gif";
 		String e16 = "file:///C:/Chat/img/emoticon/e16.png";
 		String e17 = "file:///C:/Chat/img/emoticon/e17.png";
-		String e18 = "file:///C:/Chat/img/emoticon/e18.gif";
-		String e19 = "file:///C:/Chat/img/emoticon/e19.gif";
-		String e20 = "file:///C:/Chat/img/emoticon/e20.gif";
+		String e18 = "file:///C:/Chat/img/emoticon/ee18.gif";
+		String e19 = "file:///C:/Chat/img/emoticon/ee19.gif";
+		String e20 = "file:///C:/Chat/img/emoticon/ee20.gif";
 		String e21 = "file:///C:/Chat/img/emoticon/e21.png";
 		String e22 = "file:///C:/Chat/img/emoticon/e22.png";
 		String e23 = "file:///C:/Chat/img/emoticon/e23.gif";
